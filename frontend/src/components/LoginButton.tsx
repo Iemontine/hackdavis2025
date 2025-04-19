@@ -4,7 +4,14 @@ import { useAuth0 } from "@auth0/auth0-react";
 const LoginButton = () => {
   const { loginWithRedirect } = useAuth0();
 
-  return <button onClick={() => loginWithRedirect()}>Log In</button>;
+  return (
+    <button
+      onClick={() => loginWithRedirect()}
+      className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-medium transition-colors"
+    >
+      Log In
+    </button>
+  );
 };
 
 export default LoginButton;
