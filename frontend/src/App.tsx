@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import FeaturesSection from './components/FeaturesSection';
-import HowItWorks from './components/HowItWorks';
-import TestimonialsSection from './components/TestimonialsSection';
-import CTASection from './components/CTASection';
-import Footer from './components/Footer';
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import FeaturesSection from "./components/FeaturesSection";
+import HowItWorks from "./components/HowItWorks";
+import TestimonialsSection from "./components/TestimonialsSection";
+import CTASection from "./components/CTASection";
+import Footer from "./components/Footer";
+import LoginButton from "./components/LoginButton";
 import TestApp from './test/App';
 
 function App() {
