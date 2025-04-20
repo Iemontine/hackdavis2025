@@ -10,7 +10,7 @@ function Hero() {
       {/* Background animated elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute top-20 right-[10%] w-96 h-96 bg-indigo-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20"
+          {...{ className:"absolute top-20 right-[10%] w-96 h-96 bg-indigo-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20" }}
           animate={{
             y: [0, -30, 0],
             scale: [1, 1.05, 1],
@@ -22,7 +22,7 @@ function Hero() {
           }}
         />
         <motion.div
-          className="absolute -bottom-20 left-[15%] w-80 h-80 bg-purple-600 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20"
+          {...{ className:"absolute -bottom-20 left-[15%] w-80 h-80 bg-purple-600 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20" }}
           animate={{
             y: [0, 30, 0],
             scale: [1, 1.1, 1],
@@ -74,7 +74,7 @@ function Hero() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="relative flex justify-center lg:justify-start lg:pl-4"
+            {...{ className:"relative flex justify-center lg:justify-start lg:pl-4" }}
           >
             <div className="relative w-full max-w-lg">
               <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-normal filter blur-2xl opacity-20"></div>

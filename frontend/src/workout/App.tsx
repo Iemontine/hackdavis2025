@@ -30,6 +30,86 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 }
 
+// New component for circular timer
+function CircularTimer({ timeRemaining, totalTime }: { timeRemaining: number; totalTime: number }) {
+  // Calculate the percentage of time remaining
+  const percentage = (timeRemaining / totalTime) * 100;
+  
+  // Calculate the angle for the SVG arc
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const dashoffset = circumference * (1 - percentage / 100);
+  
+  // Generate tick marks
+  const ticks = [];
+  const tickCount = 12; // Number of tick marks
+  for (let i = 0; i < tickCount; i++) {
+    const angle = (i / tickCount) * 360;
+    const tickLength = i % 3 === 0 ? 10 : 5; // Longer ticks at quarters
+    ticks.push(
+      <line
+        key={i}
+        x1={80 + (radius + 5) * Math.cos((angle - 90) * (Math.PI / 180))}
+        y1={80 + (radius + 5) * Math.sin((angle - 90) * (Math.PI / 180))}
+        x2={80 + (radius + 5 + tickLength) * Math.cos((angle - 90) * (Math.PI / 180))}
+        y2={80 + (radius + 5 + tickLength) * Math.sin((angle - 90) * (Math.PI / 180))}
+        stroke="#ffffff"
+        strokeWidth={i % 3 === 0 ? 2 : 1}
+        strokeOpacity={0.8}
+      />
+    );
+  }
+  
+  return (
+    <div className="relative flex justify-center items-center mb-3">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        {/* Outer stopwatch circle */}
+        <circle cx="80" cy="80" r={radius + 15} fill="#1e293b" strokeWidth="4" stroke="#4f46e5" />
+        
+        {/* Tick marks */}
+        {ticks}
+        
+        {/* Background circle */}
+        <circle 
+          cx="80" 
+          cy="80" 
+          r={radius} 
+          fill="transparent" 
+          stroke="#475569" 
+          strokeWidth="8"
+        />
+        
+        {/* Progress circle - pie animation */}
+        <circle 
+          cx="80" 
+          cy="80" 
+          r={radius} 
+          fill="transparent" 
+          stroke="#4f46e5" 
+          strokeWidth="8"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashoffset}
+          strokeLinecap="round"
+          transform="rotate(-90 80 80)"
+          className="transition-all duration-1000"
+        />
+        
+        {/* Stopwatch top button */}
+        <circle cx="80" cy="35" r="5" fill="#4f46e5" />
+        
+        {/* Glass reflection effect */}
+        <path 
+          d="M50,65 A40,40 0 0,1 110,65" 
+          stroke="rgba(255,255,255,0.3)" 
+          strokeWidth="15" 
+          fill="transparent" 
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
 function WorkoutSession() {
   const navigate = useNavigate();
   const { workoutId } = useParams();
@@ -46,42 +126,42 @@ function WorkoutSession() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showShareFeedback, setShowShareFeedback] = useState(false);
 
-  const repBasedWorkout: Workout = {
-    type: "rep-based",
-    name: "Strength Training Circuit",
-    description:
-      "A strength-focused workout targeting major muscle groups. Perform the specified number of repetitions for each exercise.",
-    exercises: [
-      {
-        name: "Push-Ups",
-        reps: 15,
-        description:
-          "Perform push-ups to strengthen your chest, shoulders, and triceps.",
-      },
-      {
-        name: "Squats",
-        reps: 20,
-        description: "Perform squats to strengthen your legs and glutes.",
-      },
-      {
-        name: "Bicep Curls",
-        reps: 12,
-        description:
-          "Perform bicep curls with dumbbells to strengthen your arms.",
-      },
-      {
-        name: "Lunges",
-        reps: 10,
-        description:
-          "Perform 10 lunges on each leg to target your quads and glutes.",
-      },
-      {
-        name: "Sit-Ups",
-        reps: 20,
-        description: "Perform sit-ups to strengthen your core.",
-      },
-    ],
-  };
+  // const repBasedWorkout: Workout = {
+  //   type: "rep-based",
+  //   name: "Strength Training Circuit",
+  //   description:
+  //     "A strength-focused workout targeting major muscle groups. Perform the specified number of repetitions for each exercise.",
+  //   exercises: [
+  //     {
+  //       name: "Push-Ups",
+  //       reps: 15,
+  //       description:
+  //         "Perform push-ups to strengthen your chest, shoulders, and triceps.",
+  //     },
+  //     {
+  //       name: "Squats",
+  //       reps: 20,
+  //       description: "Perform squats to strengthen your legs and glutes.",
+  //     },
+  //     {
+  //       name: "Bicep Curls",
+  //       reps: 12,
+  //       description:
+  //         "Perform bicep curls with dumbbells to strengthen your arms.",
+  //     },
+  //     {
+  //       name: "Lunges",
+  //       reps: 10,
+  //       description:
+  //         "Perform 10 lunges on each leg to target your quads and glutes.",
+  //     },
+  //     {
+  //       name: "Sit-Ups",
+  //       reps: 20,
+  //       description: "Perform sit-ups to strengthen your core.",
+  //     },
+  //   ],
+  // };
 
   const timeBasedWorkout: Workout = {
     type: "time-based",
@@ -142,7 +222,7 @@ function WorkoutSession() {
             body: JSON.stringify({
               auth0_id: user?.sub || null,
               preferences: {
-                type: 'strength',
+                type: 'cardio',
               }
             }),
           });
@@ -159,7 +239,7 @@ function WorkoutSession() {
       } catch (err) {
         console.error('Error fetching workout:', err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        setWorkout(repBasedWorkout);
+        setWorkout(timeBasedWorkout);
       } finally {
         setIsLoading(false);
       }
@@ -304,11 +384,6 @@ function WorkoutSession() {
 
   const progress = calculateProgress();
 
-  const timeProgress =
-    workout.type === "time-based"
-      ? ((totalTime - timeRemaining) / totalTime) * 100
-      : 0;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 flex flex-col text-white">
       <header className="glass-dark sticky top-0 border-b border-white/10 z-10">
@@ -316,7 +391,7 @@ function WorkoutSession() {
           <div className="flex items-center gap-6">
             <Link to="/" className="font-montserrat text-2xl font-bold flex items-baseline">
               <motion.span
-                className="text-indigo-400 mr-1"
+                {...{ className: "text-indigo-400 mr-1" }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -348,7 +423,9 @@ function WorkoutSession() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 10 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-indigo-900 border border-indigo-500 text-white px-3 py-1 rounded shadow-lg whitespace-nowrap"
+                    {...{
+                      className: "absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-indigo-900 border border-indigo-500 text-white px-3 py-1 rounded shadow-lg whitespace-nowrap"
+                    }}
                   >
                     <div className="text-sm font-medium">Link copied!</div>
                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-l-8 border-r-8 border-b-8 border-transparent border-b-indigo-900"></div>
@@ -409,6 +486,7 @@ function WorkoutSession() {
 
               {workout.type === "time-based" && (
                 <div className="text-center">
+                  <CircularTimer timeRemaining={timeRemaining} totalTime={totalTime} />
                   <div className="text-5xl font-bold text-white mb-4 font-montserrat">
                     {formatTime(timeRemaining)}
                   </div>

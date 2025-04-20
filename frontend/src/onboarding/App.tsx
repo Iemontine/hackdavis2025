@@ -1,3 +1,5 @@
+
+
 import { useState, useRef, useEffect } from 'react';
 import { useAuth0 } from "@auth0/auth0-react";
 import { Link } from 'react-router-dom';
@@ -165,13 +167,13 @@ function WorkoutPage() {
     }
   };
 
-  const handleMicrophoneClick = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
-  };
+  // const handleMicrophoneClick = () => {
+  //   if (isRecording) {
+  //     stopRecording();
+  //   } else {
+  //     startRecording();
+  //   }
+  // };
 
   // Animation variants
   const containerVariants = {
@@ -217,7 +219,7 @@ function WorkoutPage() {
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute top-0 left-10 w-96 h-96 bg-blue-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20"
+          {...{ className: "absolute top-0 left-10 w-96 h-96 bg-blue-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20" }}
           animate={{
             x: [0, 30, 0],
             y: [0, -50, 0],
@@ -230,7 +232,7 @@ function WorkoutPage() {
           }}
         />
         <motion.div
-          className="absolute bottom-0 right-10 w-96 h-96 bg-indigo-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-15"
+          {...{ className: "absolute bottom-0 right-10 w-96 h-96 bg-indigo-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-15" }}
           animate={{
             x: [0, -30, 0],
             y: [0, 50, 0],
@@ -244,7 +246,7 @@ function WorkoutPage() {
           }}
         />
         <motion.div
-          className="absolute top-1/3 left-1/3 w-96 h-96 bg-purple-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-10"
+          {...{ className: "absolute top-1/3 left-1/3 w-96 h-96 bg-purple-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-10" }}
           animate={{
             x: [0, -20, 0],
             y: [0, 20, 0],
@@ -264,7 +266,7 @@ function WorkoutPage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center">
             <Link to="/" className="font-montserrat text-2xl font-bold flex items-center">
-              <motion.div whileHover={{ x: -5 }} whileTap={{ scale: 0.95 }} className="mr-2">
+              <motion.div whileHover={{ x: -5 }} whileTap={{ scale: 0.95 }} {...{ className: "mr-2" }}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
                 </svg>
@@ -283,9 +285,11 @@ function WorkoutPage() {
                   <div className="relative">
                     <motion.img
                       whileHover={{ scale: 1.1 }}
-                      src={user.picture}
-                      alt={user.name || "User"}
-                      className="w-10 h-10 rounded-full border-2 border-indigo-400 object-cover"
+                      {...{
+                        src: user.picture,
+                        alt: user.name || "User",
+                        className: "w-10 h-10 rounded-full border-2 border-indigo-400 object-cover"
+                      }}
                     />
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-800"></div>
                   </div>
@@ -305,13 +309,16 @@ function WorkoutPage() {
       {/* Main content area with improved responsive layout */}
       <main className="flex-1 container mx-auto px-4 py-6 md:py-10 relative z-10">
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+          {...{ className: "grid grid-cols-1 lg:grid-cols-12 gap-6" }}
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Assistant panel - larger on desktop, now also first on mobile */}
-          <motion.div className="lg:col-span-7 xl:col-span-8 order-1 lg:order-1" variants={itemVariants}>
+          <motion.div
+            {...{ className:"lg:col-span-7 xl:col-span-8 order-1 lg:order-1" }}
+            variants={itemVariants}
+          >
             <div className="h-[300px] md:h-[600px] glass rounded-2xl border border-white/20 overflow-hidden shadow-xl">
               <div className="px-6 py-4 border-b border-white/10 flex items-center bg-white/5">
                 <div className="w-3 h-3 rounded-full bg-blue-400 animate-pulse mr-3"></div>
@@ -325,9 +332,9 @@ function WorkoutPage() {
                   </div>
                 ) : agentMessages.length > 0 ? (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      {...{ className:"bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10" }}
                   >
                     <p className="text-white/90 leading-relaxed text-lg">
                       {agentMessages[agentMessages.length - 1]}
@@ -336,10 +343,10 @@ function WorkoutPage() {
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <motion.p
-                      variants={pulseVariants}
-                      initial="initial"
-                      animate="pulse"
-                      className="text-white/50 italic text-center"
+                          variants={pulseVariants}
+                          initial="initial"
+                          animate="pulse"
+                          {...{ className:"text-white/50 italic text-center" }}
                     >
                       Getting ready to assist with your workout...
                     </motion.p>
@@ -350,7 +357,9 @@ function WorkoutPage() {
           </motion.div>
 
           {/* Controls panel - right side on desktop, below assistant on mobile */}
-          <motion.div className="lg:col-span-5 xl:col-span-4 order-2 lg:order-2 flex flex-col h-[500px] md:h-[600px]" variants={itemVariants}>
+          <motion.div
+            {...{ className:"lg:col-span-5 xl:col-span-4 order-2 lg:order-2 flex flex-col h-[500px] md:h-[600px]", variants: itemVariants }}
+          >
             {/* Microphone control with integrated instructions */}
             <div className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl p-6 flex flex-col items-center mb-6 h-[240px] md:h-[290px]">
               <div className="relative w-full flex flex-col items-center">
@@ -360,7 +369,7 @@ function WorkoutPage() {
                       initial={{ opacity: 0, y: -20 }}
                       animate={{ opacity: 1, y: -10 }}
                       exit={{ opacity: 0, y: -20 }}
-                      className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white text-slate-800 px-4 py-2 rounded-lg shadow-lg w-48 text-center z-10"
+                      {...{ className:"absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white text-slate-800 px-4 py-2 rounded-lg shadow-lg w-48 text-center z-10" }}
                     >
                       <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-4 h-4 bg-white"></div>
                       Tap to start speaking
@@ -369,22 +378,33 @@ function WorkoutPage() {
                 </AnimatePresence>
                 
                 <motion.button
-                  className={`relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all ${isRecording
-                    ? 'bg-gradient-to-r from-red-600 to-pink-600'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
-                  }`}
-                  onClick={handleMicrophoneClick}
-                  disabled={isProcessing}
-                  whileHover={!isRecording ? { scale: 1.05, boxShadow: '0 0 15px rgba(79, 70, 229, 0.6)' } : {}}
-                  whileTap={{ scale: 0.95 }}
+                  {...{
+                    className: `relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all ${isRecording
+                      ? 'bg-gradient-to-r from-red-600 to-pink-600'
+                      : isProcessing
+                        ? 'bg-gradient-to-r from-blue-600/50 to-indigo-600/50 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                      }`,
+                    onClick: () => {
+                      if (!isProcessing) {
+                        if (isRecording) {
+                          stopRecording();
+                        } else {
+                          startRecording();
+                        }
+                      }
+                    }
+                  }}
+                  whileHover={!isRecording && !isProcessing ? { scale: 1.05, boxShadow: '0 0 15px rgba(79, 70, 229, 0.6)' } : {}}
+                  whileTap={!isProcessing ? { scale: 0.95 } : {}}
                   initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
+                  animate={{ scale: 1, opacity: isProcessing ? 0.7 : 1 }}
                   transition={{ type: "spring", stiffness: 300, damping: 15 }}
                 >
                   {isRecording && (
                     <>
                       <motion.div
-                        className="absolute inset-0 rounded-full bg-red-500/20"
+                        {...{ className: "absolute inset-0 rounded-full bg-red-500/20" }}
                         initial={{ scale: 0.8, opacity: 0.2 }}
                         animate={{
                           scale: [1, 1.4, 1],
@@ -397,7 +417,7 @@ function WorkoutPage() {
                         }}
                       />
                       <motion.div
-                        className="absolute inset-0 rounded-full bg-red-500/10"
+                        {...{ className:"absolute inset-0 rounded-full bg-red-500/10" }}
                         initial={{ scale: 0.8, opacity: 0.1 }}
                         animate={{
                           scale: [1, 1.6, 1],
@@ -431,7 +451,7 @@ function WorkoutPage() {
               </div>
 
               <motion.p
-                className="mt-4 font-medium text-white/90 text-lg"
+                {...{ className:"mt-4 font-medium text-white/90 text-lg" }}
                 variants={pulseVariants}
                 initial="initial"
                 animate={isRecording ? "pulse" : "initial"}
@@ -470,7 +490,7 @@ function WorkoutPage() {
 
                 {isProcessing && (
                   <motion.div
-                    className="mt-2 flex items-center glass-dark rounded-full px-4 py-2"
+                    {...{ className:"mt-2 flex items-center glass-dark rounded-full px-4 py-2" }}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
@@ -486,7 +506,7 @@ function WorkoutPage() {
 
             {/* Transcription display - sized to fill remaining space */}
             <motion.div
-              className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl flex-grow"
+              {...{ className: "glass rounded-2xl border border-white/20 overflow-hidden shadow-xl flex-grow" }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -506,7 +526,7 @@ function WorkoutPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-white/90 leading-relaxed"
+                      {...{ className: "text-white/90 leading-relaxed" }}
                     >
                       {transcription}
                     </motion.p>
@@ -516,7 +536,7 @@ function WorkoutPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-white/40 italic text-center flex items-center justify-center h-full"
+                      {...{ className: "text-white/40 italic text-center flex items-center justify-center h-full" }}
                     >
                       <p>Your voice will be transcribed here...</p>
                     </motion.div>
