@@ -12,7 +12,7 @@ const Navbar: React.FC = () => {
       <div className="hidden md:flex space-x-8">
         <a href="#features" className="hover:text-blue-300 transition-colors">Features</a>
         <a href="#how-it-works" className="hover:text-blue-300 transition-colors">How It Works</a>
-        <a href="#testimonials" className="hover:text-blue-300 transition-colors">Testimonials</a>
+        <a href="#agents" className="hover:text-blue-300 transition-colors">Agents</a>
       </div>
       <button className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-medium transition-colors">
         Get Started
