@@ -1,8 +1,40 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 
 const LoginButton = () => {
-  const { user, loginWithRedirect, logout } = useAuth0();
+  const { user, loginWithRedirect, logout, isAuthenticated, getIdTokenClaims } =
+    useAuth0();
+
+  useEffect(() => {
+    const saveUserToBackend = async () => {
+      if (isAuthenticated && user) {
+        try {
+          const token = await getIdTokenClaims();
+          const response = await fetch("http://localhost:8000/users/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token?.__raw || ""}`,
+            },
+            body: JSON.stringify({
+              auth0_id: user.sub,
+              name: user.name,
+              email: user.email,
+              preferences: {}, // Add default or user-specific preferences here
+            }),
+          });
+
+          if (!response.ok) {
+            console.error("Failed to save user:", await response.json());
+          }
+        } catch (error) {
+          console.error("Error saving user to backend:", error);
+        }
+      }
+    };
+
+    saveUserToBackend();
+  }, [isAuthenticated, user]);
 
   return (
     <div className="flex items-center">
