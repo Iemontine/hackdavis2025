@@ -96,7 +96,6 @@ async def get_user(auth0_id: str):
     return user
 
 
-
 # Transcription endpoint
 @app.post("/transcribe/")
 async def transcribe_audio(file: UploadFile = File(...)):
@@ -122,6 +121,7 @@ async def transcribe_audio(file: UploadFile = File(...)):
     except Exception as e:
         return {"error": str(e)}
     
+
 @app.post("/workouts/start_workout")
 async def start_workout(auth0_id: str):
     # Check if user exists
