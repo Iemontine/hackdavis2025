@@ -194,14 +194,9 @@ async def start_workout(request: WorkoutRequest):
         if not verify_authorized_email(user.get("email", "")):
             raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
         
-        if user_id not in uid_to_session:
-            runner = session_runner.create_session_runner(user_id)
-            print("SCREW YOU", runner)
-            uid_to_session[user_id] = runner
-            greeting = await session_runner.call_agent_async("Start the conversation.", runner, user_id)
-        else:
-            runner = uid_to_session[user_id]
-            greeting = session_runner.call_agent_async("Continue the conversation.", runner, user_id)
+        runner = session_runner.create_session_runner(user_id)
+        uid_to_session[user_id] = runner
+        greeting = await session_runner.call_agent_async("Start the conversation.", runner, user_id)
         return {"message": greeting}
     except HTTPException as e:
         raise e

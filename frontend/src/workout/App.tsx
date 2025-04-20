@@ -125,7 +125,7 @@ function WorkoutSession() {
       setIsLoading(true);
       try {
         if (workoutId) {
-          const response = await fetch(`http://localhost:8000/workout/${workoutId}`);
+          const response = await fetch(`${import.meta.env.VITE_APP_BACKEND_URL}/workout/${workoutId}`);
           if (!response.ok) {
             throw new Error('Workout not found');
           }
@@ -134,7 +134,7 @@ function WorkoutSession() {
           setWorkoutUrl(`${window.location.origin}/workout/${data.workout_id}`);
         } else {
           console.log(import.meta.env.VITE_APP_BACKEND_URL);
-          const response = await fetch('http://localhost:8000/workout/generate', {
+          const response = await fetch(`${import.meta.env.VITE_APP_BACKEND_URL}/workout/generate`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

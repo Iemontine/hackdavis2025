@@ -49,7 +49,7 @@ function WorkoutPage() {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/onboarding/start_onboarding', {
+      const response = await fetch(`${import.meta.env.VITE_APP_BACKEND_URL}/onboarding/start_onboarding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ function WorkoutPage() {
       const formData = new FormData();
       formData.append('file', audioBlob, 'recording.wav');
 
-      const response = await fetch('http://localhost:8000/transcribe/', {
+      const response = await fetch(`${import.meta.env.VITE_APP_BACKEND_URL}/transcribe/`, {
         method: 'POST',
         body: formData,
       });
@@ -138,7 +138,7 @@ function WorkoutPage() {
       console.log(user);
       const auth0Id = user?.sub;
 
-      const response = await fetch('http://localhost:8000/workouts/add_to_workout_conversation', {
+      const response = await fetch(`${import.meta.env.VITE_APP_BACKEND_URL}/workouts/add_to_workout_conversation`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
