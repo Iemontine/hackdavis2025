@@ -66,7 +66,16 @@ class WorkoutConversationRequest(BaseModel):
     auth0_id: str
     message: str
 
-# Endpoint to save user data
+# Add new Pydantic model for fitness profile updates
+class FitnessProfileUpdate(BaseModel):
+    auth0_id: str
+    height: str
+    weight: str
+    fitness_level: str
+    workout_time: str
+    goal: str
+
+# Endpoint to create a new user
 @app.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def save_user(user: User):
     # Check if user already exists
@@ -81,6 +90,12 @@ async def save_user(user: User):
         "email": user.email,
         "preferences": user.preferences,
         "created_at": datetime.utcnow(),
+        "height": None,
+        "weight": None,
+        "age": 0,
+        "fitness_level": None,
+        "workout_time": None,
+        "goal": None
     }
 
     # Insert into MongoDB
@@ -88,7 +103,7 @@ async def save_user(user: User):
 
     # Map MongoDB's _id to id for the response
     user_data["id"] = str(result.inserted_id)  # Convert ObjectId to string
-    del user_data["_id"]  # Remove the MongoDB-specific _id field
+    # del user_data["_id"] if "_id" in user_data else None  # Remove the MongoDB-specific _id field
 
     return user_data
 
@@ -98,10 +113,11 @@ async def get_user(auth0_id: str):
     user = users_collection.find_one({"auth0_id": auth0_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    user["_id"] = str(user["_id"])  # Convert ObjectId to string
+    user["id"] = str(user["_id"])  # Convert ObjectId to string
+    del user["_id"]  # Remove MongoDB-specific field
     return user
 
-
+# Endpoint to get user data by Auth0 ID
 # Transcription endpoint
 @app.post("/transcribe/")
 async def transcribe_audio(file: UploadFile = File(...)):
@@ -117,16 +133,13 @@ async def transcribe_audio(file: UploadFile = File(...)):
                 model="whisper-1",
                 file=audio_file
             )
-            
-        
         # Clean up the temporary file
         os.remove(temp_file_path)
-        
         # Return the transcription text
         return {"transcription": response.text}
     except Exception as e:
         return {"error": str(e)}
-    
+            
 uid_to_sid = {}
 
 # Add debug route to verify server is running
@@ -142,14 +155,10 @@ async def start_workout(request: WorkoutRequest):
         user = users_collection.find_one({"auth0_id": request.auth0_id})
         if not user and request.auth0_id != "user123":  # Allow test user
             raise HTTPException(status_code=404, detail="User not found")
-        
         greeting = await session_runner.call_agent_async("Start the conversation.")
-
         session_id = session_runner.SESSION_ID
-
         if request.auth0_id not in uid_to_sid:
             uid_to_sid[request.auth0_id] = session_id
-        
         return {"message": greeting}
     except Exception as e:
         # Log the error and return a helpful message
@@ -163,13 +172,11 @@ async def add_to_workout_conversation(request: WorkoutConversationRequest):
         user = users_collection.find_one({"auth0_id": request.auth0_id})
         if not user and request.auth0_id != "user123":  # Allow test user
             raise HTTPException(status_code=404, detail="User not found")
-        
         if request.auth0_id not in uid_to_sid:
             # If no session exists, start a new one
             greeting = await session_runner.call_agent_async("Start the conversation.")
             uid_to_sid[request.auth0_id] = session_runner.SESSION_ID
             return {"message": greeting}
-        
         # Use the existing session ID
         session_id = uid_to_sid[request.auth0_id]
         response = await session_runner.call_agent_async(request.message)
@@ -179,3 +186,35 @@ async def add_to_workout_conversation(request: WorkoutConversationRequest):
         # Log the error and return a helpful message
         print(f"Error in add_to_workout_conversation: {str(e)}")
         return {"message": f"An error occurred: {str(e)}. Please check server logs."}
+
+# Separate endpoint to update user fitness profile
+@app.post("/users/update-fitness-profile")
+async def update_fitness_profile(profile_update: FitnessProfileUpdate):
+    try:
+        # Check if user exists
+        user = users_collection.find_one({"auth0_id": profile_update.auth0_id})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update user with fitness profile information
+        result = users_collection.update_one(
+            {"auth0_id": profile_update.auth0_id},
+            {"$set": {
+                "height": profile_update.height,
+                "weight": profile_update.weight,
+                "fitness_level": profile_update.fitness_level,
+                "workout_time": profile_update.workout_time,
+                "goal": profile_update.goal
+            }}
+        )
+        
+        if result.modified_count == 0:
+            # If no document was modified, it might be due to the document already having the same values
+            # In this case, we still want to return success
+            return {"message": "Profile already up to date or no changes needed"}
+        
+        return {"message": "Fitness profile updated successfully"}
+    
+    except Exception as e:
+        print(f"Error updating fitness profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
