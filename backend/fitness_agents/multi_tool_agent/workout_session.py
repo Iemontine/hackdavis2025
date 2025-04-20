@@ -8,7 +8,7 @@ from google.adk.runners import Runner
 from google.genai import types
 import requests # For creating message Content/Parts
 
-import workout_generator
+from fitness_agents.multi_tool_agent import workout_generator
 
 import warnings
 # Ignore all warnings

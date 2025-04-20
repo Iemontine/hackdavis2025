@@ -14,7 +14,7 @@ import json
 import traceback
 import uuid
 import shortuuid
-
+import requests
 
 # important globals
 uid_to_session = {}
@@ -109,7 +109,7 @@ class WorkoutResponse(BaseModel):
 
 class WorkoutGenerationRequest(BaseModel):
     auth0_id: Optional[str] = None
-    preferences: Optional[Dict[str, Any]] = None
+    # preferences: Optional[Dict[str, Any]] = None
 
 # Generate a unique, readable workout ID
 def generate_workout_id():
@@ -360,61 +360,68 @@ async def generate_workout(request: WorkoutGenerationRequest):
         
         # Generate a unique workout ID
         workout_id = generate_workout_id()
+        
+        url = f"{os.getenv('VITE_APP_BACKEND_URL')}/users/" + request.auth0_id
+        headers = {"Content-Type": "application/json"}
+        response = requests.get(url, headers=headers)
 
-        workout_session.call_agent_async()
+        print(response)
+
+        # workout_session.create_session_runner()
+        # workout_session.call_agent_async()
         
-        # # For now, let's create sample workouts based on type
-        # workout_type = request.preferences.get("type", "cardio") if request.preferences else "cardio"
+        # # # For now, let's create sample workouts based on type
+        # # workout_type = request.preferences.get("type", "cardio") if request.preferences else "cardio"
         
-        # if workout_type == "cardio":
-        #     workout = {
-        #         "type": "time-based",
-        #         "name": "Cardio Blast",
-        #         "duration": "30 minutes",
-        #         "description": "A high-intensity cardio workout to get your heart pumping.",
-        #         "exercises": [
-        #             {"name": "Jumping Jacks", "description": "Classic cardio exercise.", "duration": "2 minutes"},
-        #             {"name": "High Knees", "description": "Run in place bringing knees to chest height.", "duration": "2 minutes"},
-        #             {"name": "Mountain Climbers", "description": "Dynamic plank with alternating knee drives.", "duration": "1 minute"},
-        #             {"name": "Burpees", "description": "Full-body exercise combining squat, plank, and jump.", "duration": "1 minute"},
-        #             {"name": "Rest", "description": "Take a short break.", "duration": "1 minute"}
-        #         ],
-        #         "created_by": request.auth0_id if request.auth0_id else None
-        #     }
-        # else:
-        #     workout = {
-        #         "type": "rep-based",
-        #         "name": "Strength Builder",
-        #         "description": "A full-body strength workout targeting major muscle groups.",
-        #         "exercises": [
-        #             {"name": "Push-Ups", "description": "Upper body pressing exercise.", "reps": 15},
-        #             {"name": "Squats", "description": "Lower body exercise focusing on quadriceps.", "reps": 20},
-        #             {"name": "Dumbbell Rows", "description": "Upper back pulling exercise.", "reps": 12},
-        #             {"name": "Lunges", "description": "Lower body exercise for quads and glutes.", "reps": 10},
-        #             {"name": "Plank", "description": "Core stabilization exercise.", "duration": "30 seconds"}
-        #         ],
-        #         "created_by": request.auth0_id if request.auth0_id else None
-        #     }
+        # # if workout_type == "cardio":
+        # #     workout = {
+        # #         "type": "time-based",
+        # #         "name": "Cardio Blast",
+        # #         "duration": "30 minutes",
+        # #         "description": "A high-intensity cardio workout to get your heart pumping.",
+        # #         "exercises": [
+        # #             {"name": "Jumping Jacks", "description": "Classic cardio exercise.", "duration": "2 minutes"},
+        # #             {"name": "High Knees", "description": "Run in place bringing knees to chest height.", "duration": "2 minutes"},
+        # #             {"name": "Mountain Climbers", "description": "Dynamic plank with alternating knee drives.", "duration": "1 minute"},
+        # #             {"name": "Burpees", "description": "Full-body exercise combining squat, plank, and jump.", "duration": "1 minute"},
+        # #             {"name": "Rest", "description": "Take a short break.", "duration": "1 minute"}
+        # #         ],
+        # #         "created_by": request.auth0_id if request.auth0_id else None
+        # #     }
+        # # else:
+        # #     workout = {
+        # #         "type": "rep-based",
+        # #         "name": "Strength Builder",
+        # #         "description": "A full-body strength workout targeting major muscle groups.",
+        # #         "exercises": [
+        # #             {"name": "Push-Ups", "description": "Upper body pressing exercise.", "reps": 15},
+        # #             {"name": "Squats", "description": "Lower body exercise focusing on quadriceps.", "reps": 20},
+        # #             {"name": "Dumbbell Rows", "description": "Upper back pulling exercise.", "reps": 12},
+        # #             {"name": "Lunges", "description": "Lower body exercise for quads and glutes.", "reps": 10},
+        # #             {"name": "Plank", "description": "Core stabilization exercise.", "duration": "30 seconds"}
+        # #         ],
+        # #         "created_by": request.auth0_id if request.auth0_id else None
+        # #     }
         
-        # Prepare the workout document for MongoDB
-        workout_doc = {
-            "workout_id": workout_id,
-            "workout": workout,
-            "created_at": datetime.utcnow(),
-        }
+        # # Prepare the workout document for MongoDB
+        # workout_doc = {
+        #     "workout_id": workout_id,
+        #     "workout": workout,
+        #     "created_at": datetime.utcnow(),
+        # }
         
-        # Store in MongoDB
-        workouts_collection.insert_one(workout_doc)
+        # # Store in MongoDB
+        # workouts_collection.insert_one(workout_doc)
         
-        # Create the shareable URL (adjust the domain for production)
-        share_url = f"http://localhost:5173/workout/{workout_id}"
+        # # Create the shareable URL (adjust the domain for production)
+        # share_url = f"http://localhost:5173/workout/{workout_id}"
         
-        # Return the workout with its ID and share URL
-        return {
-            "workout_id": workout_id,
-            "workout": workout,
-            "share_url": share_url
-        }
+        # # Return the workout with its ID and share URL
+        # return {
+        #     "workout_id": workout_id,
+        #     "workout": workout,
+        #     "share_url": share_url
+        # }
     
     except HTTPException as e:
         raise e
