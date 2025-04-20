@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import { motion, AnimatePresence } from "framer-motion";
 import LoginButton from "./components/LoginButton";
 import Hero from "./components/Hero";
-import FeaturesSection from "./components/FeaturesSection";
+// import FeaturesSection from "./components/FeaturesSection";
 import HowItWorks from "./components/HowItWorks";
 import AgentSection from "./components/AgentSection";
 import CTASection from "./components/CTASection";
@@ -15,13 +15,13 @@ import { Link } from "react-router-dom";
 import { useEffect } from "react";
 
 // PageTransition component for consistent transitions
-const PageTransition = ({ children }) => (
+const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
     transition={{ duration: 0.3 }}
-    className="relative z-10 min-h-screen w-full"
+    {...{ className: "relative z-10 min-h-screen w-full" }}
   >
     {children}
   </motion.div>
@@ -40,7 +40,7 @@ const AnimatedRoutes = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 0 }}
           exit={{ opacity: 0.7 }}
-          className="fixed inset-0 bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 pointer-events-none"
+          {...{ className: "fixed inset-0 bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 pointer-events-none" }}
           style={{ zIndex: 9999 }}
         />
       </AnimatePresence>
@@ -77,7 +77,6 @@ const AnimatedRoutes = () => {
                 <div className="min-h-screen bg-gradient-to-b from-slate-900 via-indigo-900 to-purple-900 text-white">
                   <Header />
                   <Hero />
-                  <FeaturesSection />
                   <HowItWorks />
                   <AgentSection />
                   <CTASection />
@@ -94,7 +93,7 @@ const AnimatedRoutes = () => {
 
 // Header component with user profile
 function Header() {
-  const { isAuthenticated, user } = useAuth0();
+  const { isAuthenticated } = useAuth0();
 
   return (
     <header className="glass-dark py-4 px-6 sticky top-0 z-50">

@@ -219,8 +219,7 @@ function WorkoutSession() {
             setIsResting(false);
             clearInterval(timerRef.current!);
 
-            if (currentExerciseIndex >= (workout?.exercises.length || 0) - 1) {
-            } else {
+            if (currentExerciseIndex < (workout?.exercises.length || 0) - 1) {
               setCurrentExerciseIndex((prev) => prev + 1);
             }
 
