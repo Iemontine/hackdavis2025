@@ -1,23 +1,77 @@
-import { useState, useRef } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect, useRef } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
+import ProfileCard from './ProfileCard';
 
 function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [user, setUser] = useState({
-    name: "Alex Johnson",
-    experience: "Intermediate",
-    goal: "Strength",
-    height: "5'10\"",
-    weight: "175 lbs",
-    lastWorkout: "Upper Body",
-    lastWorkoutDate: "Yesterday"
+    name: "Loading...",
+    email: "",
+    auth0_id: "",
+    experience: "Loading...",
+    goal: "Loading...",
+    height: "Loading...",
+    weight: "Loading...",
+    age: 0,
+    lastWorkout: "None yet",
+    lastWorkoutDate: "N/A",
+    workout_time: "Loading...",
+    fitness_level: "Loading..."
   });
+
+  const [isLoading, setIsLoading] = useState(true);
+  const { getAccessTokenSilently, user: auth0User, isAuthenticated } = useAuth0();
 
   // References for smooth scrolling
   const dashboardRef = useRef(null);
   const featuresRef = useRef(null);
   const agentsRef = useRef(null);
+
+  // Fetch user data from your backend
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (isAuthenticated && auth0User) {
+        try {
+          setIsLoading(true);
+          // Get the access token
+          const token = await getAccessTokenSilently();
+          
+          // Make API call to get user profile
+          const response = await fetch(`http://localhost:8000/users/profile?auth0_id=${auth0User.sub}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const userData = await response.json();
+            setUser({
+              name: userData.name || "Anonymous User",
+              email: userData.email || "",
+              auth0_id: userData.auth0_id || "",
+              experience: userData.fitness_level || "Not specified",
+              goal: userData.goal || "Not specified",
+              height: userData.height || "Not specified",
+              weight: userData.weight || "Not specified",
+              age: userData.age || 0,
+              workout_time: userData.workout_time || "Not specified",
+              fitness_level: userData.fitness_level || "Not specified",
+              lastWorkout: "None yet", // You might want to add these fields to your backend
+              lastWorkoutDate: "N/A"
+            });
+          } else {
+            console.error("Failed to fetch user data");
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [isAuthenticated, auth0User, getAccessTokenSilently]);
 
   // Scroll to section function
   const scrollToSection = (section) => {
@@ -74,35 +128,7 @@ function App() {
         <section ref={dashboardRef} className="py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* User Profile Card */}
-            <div className="bg-white rounded-xl shadow-lg p-6 transform transition duration-300 hover:scale-105">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Profile</h2>
-              <div className="flex flex-col space-y-3">
-                <div className="flex items-center">
-                  <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-2xl font-bold">
-                    {user.name.charAt(0)}
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="font-semibold text-lg">{user.name}</h3>
-                    <p className="text-gray-500">{user.experience} • {user.goal}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-500">Height</p>
-                    <p className="font-medium">{user.height}</p>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-500">Weight</p>
-                    <p className="font-medium">{user.weight}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6">
-                <button className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                  Edit Profile
-                </button>
-              </div>
-            </div>
+            <ProfileCard user={user} isLoading={isLoading} />
 
             {/* Quick Actions */}
             <div className="bg-white rounded-xl shadow-lg p-6 transform transition duration-300 hover:scale-105">
