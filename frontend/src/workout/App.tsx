@@ -12,18 +12,18 @@ function WorkoutPage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
-      
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         await sendAudioToServer(audioBlob);
       };
-      
+
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorderRef.current.start();
       setIsRecording(true);
@@ -47,12 +47,12 @@ function WorkoutPage() {
     try {
       const formData = new FormData();
       formData.append('file', audioBlob, 'recording.wav');
-      
+
       const response = await fetch('http://localhost:8000/transcribe/', {
         method: 'POST',
         body: formData,
       });
-      
+
       const data = await response.json();
       if (data.transcription) {
         setTranscription(data.transcription);
@@ -80,37 +80,36 @@ function WorkoutPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center pt-12 px-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
         <h1 className="text-2xl font-bold text-center mb-6 text-indigo-700">Voice Workout Assistant</h1>
-        
+
         <div className="flex flex-col items-center">
           <button
-            className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg transition-all ${
-              isRecording 
-                ? 'bg-red-500 animate-pulse' 
+            className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg transition-all ${isRecording
+                ? 'bg-red-500 animate-pulse'
                 : 'bg-indigo-600 hover:bg-indigo-700'
-            }`}
+              }`}
             onClick={handleMicrophoneClick}
             disabled={isProcessing}
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-12 w-12 text-white" 
-              fill="none" 
-              viewBox="0 0 24 24" 
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-12 w-12 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
               />
             </svg>
           </button>
-          
+
           <p className="mt-4 font-medium">
             {isRecording ? "Release to stop recording" : "Push to talk"}
           </p>
-          
+
           {isProcessing && (
             <div className="mt-4 flex items-center">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-700"></div>
@@ -129,7 +128,7 @@ function WorkoutPage() {
             )}
           </div>
         </div>
-        
+
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>Speak clearly into your microphone. Push the button, speak, then release.</p>
         </div>
