@@ -230,6 +230,42 @@ async def update_fitness_profile(profile_update: FitnessProfileUpdate):
     
     except Exception as e:
         print(f"Error updating fitness profile: {str(e)}")
-        traceback_str = traceback.format_exc()
-        print(f"Traceback: {traceback_str}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    
+
+@app.get("/users/profile")
+async def get_user_profile(auth0_id: str):
+    try:
+        # Look up user in your database
+        user_data = users_collection.find_one({"auth0_id": auth0_id})
+        
+        if not user_data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Convert ObjectId to string for JSON serialization
+        if "_id" in user_data:
+            user_data["_id"] = str(user_data["_id"])
+        
+        return user_data
+    except Exception as e:
+        print(f"Error fetching user profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    
+
+@app.get("/users/profile")
+async def get_user_profile(auth0_id: str):
+    try:
+        # Look up user in your database
+        user_data = users_collection.find_one({"auth0_id": auth0_id})
+        
+        if not user_data:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Convert ObjectId to string for JSON serialization
+        if "_id" in user_data:
+            user_data["_id"] = str(user_data["_id"])
+        
+        return user_data
+    except Exception as e:
+        print(f"Error fetching user profile: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
