@@ -1,77 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import ProfileCard from './ProfileCard';
 
 function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
-  const [user, setUser] = useState({
-    name: "Loading...",
-    email: "",
-    auth0_id: "",
-    experience: "Loading...",
-    goal: "Loading...",
-    height: "Loading...",
-    weight: "Loading...",
-    age: 0,
-    lastWorkout: "None yet",
-    lastWorkoutDate: "N/A",
-    workout_time: "Loading...",
-    fitness_level: "Loading..."
-  });
-
-  const [isLoading, setIsLoading] = useState(true);
-  const { getAccessTokenSilently, user: auth0User, isAuthenticated } = useAuth0();
+  const { user: auth0User, isAuthenticated, isLoading } = useAuth0();
 
   // References for smooth scrolling
   const dashboardRef = useRef(null);
   const featuresRef = useRef(null);
   const agentsRef = useRef(null);
 
-  // Fetch user data from your backend
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (isAuthenticated && auth0User) {
-        try {
-          setIsLoading(true);
-          // Get the access token
-          const token = await getAccessTokenSilently();
-
-          // Make API call to get user profile
-          const response = await fetch(`http://localhost:8000/users/profile?auth0_id=${auth0User.sub}`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            setUser({
-              name: userData.name || "Anonymous User",
-              email: userData.email || "",
-              auth0_id: userData.auth0_id || "",
-              experience: userData.fitness_level || "Not specified",
-              goal: userData.goal || "Not specified",
-              height: userData.height || "Not specified",
-              weight: userData.weight || "Not specified",
-              age: userData.age || 0,
-              workout_time: userData.workout_time || "Not specified",
-              fitness_level: userData.fitness_level || "Not specified",
-              lastWorkout: "None yet", // You might want to add these fields to your backend
-              lastWorkoutDate: "N/A"
-            });
-          } else {
-            console.error("Failed to fetch user data");
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchUserData();
-  }, [isAuthenticated, auth0User, getAccessTokenSilently]);
+  // Create a user profile object directly from Auth0 data
+  const user = {
+    name: auth0User?.name || "Anonymous User",
+    email: auth0User?.email || "",
+    auth0_id: auth0User?.sub || "",
+    experience: "Not specified",
+    goal: "Not specified",
+    height: "Not specified",
+    weight: "Not specified",
+    age: 0,
+    workout_time: "Not specified",
+    fitness_level: "Not specified",
+    lastWorkout: "None yet", // You might want to add these fields to your backend
+    lastWorkoutDate: "N/A"
+  };
 
   // Scroll to section function
   const scrollToSection = (section) => {
@@ -110,13 +64,22 @@ function App() {
             </button>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <button className="flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
-                <span className="h-8 w-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-600 font-semibold">
-                  {user.name.charAt(0)}
-                </span>
-                <span className="ml-2 hidden md:inline">{user.name}</span>
-              </button>
+            <div className="flex items-center">
+              {auth0User?.picture ? (
+                <div className="relative">
+                  <img
+                    src={auth0User.picture}
+                    alt={auth0User.name || "User"}
+                    className="w-8 h-8 rounded-full border-2 border-indigo-400/50"
+                  />
+                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border border-white"></div>
+                </div>
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-600 font-semibold">
+                  {auth0User?.name?.charAt(0) || "?"}
+                </div>
+              )}
+              <span className="ml-2 hidden md:inline">{auth0User?.name || "User"}</span>
             </div>
           </div>
         </div>
