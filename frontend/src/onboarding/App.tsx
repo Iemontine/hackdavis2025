@@ -310,9 +310,9 @@ function WorkoutPage() {
           initial="hidden"
           animate="visible"
         >
-          {/* Assistant panel - larger on desktop, stacks on top for mobile */}
-          <motion.div className="lg:col-span-7 xl:col-span-8 order-2 lg:order-1" variants={itemVariants}>
-            <div className="h-[500px] md:h-[600px] glass rounded-2xl border border-white/20 overflow-hidden shadow-xl">
+          {/* Assistant panel - larger on desktop, now also first on mobile */}
+          <motion.div className="lg:col-span-7 xl:col-span-8 order-1 lg:order-1" variants={itemVariants}>
+            <div className="h-[300px] md:h-[600px] glass rounded-2xl border border-white/20 overflow-hidden shadow-xl">
               <div className="px-6 py-4 border-b border-white/10 flex items-center bg-white/5">
                 <div className="w-3 h-3 rounded-full bg-blue-400 animate-pulse mr-3"></div>
                 <h2 className="text-lg font-semibold text-white/90 font-montserrat">FitAI Assistant</h2>
@@ -349,8 +349,8 @@ function WorkoutPage() {
             </div>
           </motion.div>
 
-          {/* Controls panel - right side on desktop, below on mobile */}
-          <motion.div className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 flex flex-col h-[500px] md:h-[600px]" variants={itemVariants}>
+          {/* Controls panel - right side on desktop, below assistant on mobile */}
+          <motion.div className="lg:col-span-5 xl:col-span-4 order-2 lg:order-2 flex flex-col h-[500px] md:h-[600px]" variants={itemVariants}>
             {/* Microphone control with integrated instructions */}
             <div className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl p-6 flex flex-col items-center mb-6 h-[240px] md:h-[290px]">
               <div className="relative w-full flex flex-col items-center">
