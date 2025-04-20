@@ -1,3 +1,4 @@
+import json
 import os
 import asyncio
 from dotenv import load_dotenv
@@ -20,13 +21,34 @@ load_dotenv()
 # Use one of the model constants defined earlier
 AGENT_MODEL = "gemini-2.0-flash" # Starting with a powerful Gemini model
 
-front_agent = Agent(
+def format_exercises(list_of_exercises: list[str]):
+    """Converts string array of exercises to JSON format."""
+    exercises = { 
+        "exercises": list_of_exercises
+    }
+    print(exercises)
+    return exercises
+
+from pydantic import BaseModel, Field
+
+class Exercises(BaseModel):
+    """Pydantic model for the output of the function."""
+    name: list[str] = Field(..., description="Name of the exercise")
+    description: list[str] = Field(..., description="Description of the exercise")
+    duration: list[int] = Field(..., description="Duration of the exercise in seconds")
+    type: list[str] = Field(..., description="Type of the exercise. Can only be TIME BASED or REPETITION BASED.")
+
+workout_agent = Agent(
     name="workout_generator",
     model=AGENT_MODEL, # Specifies the underlying LLM
     description="Takes a fitness profile in JSON string and generates a workout routine.", # Crucial for delegation later
-    instruction="You are a workout generator. Your goal is to generate a workout routine based on the user's fitness profile. "
-                "After the user answers all of these questions, You must call 'create_profile_json' with the user's answers and print out the returned results.",
-    tools=[], # Make the tool available to this agent
+    instruction="You are a workout generator. Your goal is to generate a workout routine based on the user's fitness profile data which is in JSON string format."
+                "You will receive a JSON string with the user's height, weight, fitness level, workout time, and goal."
+                "IMPORTANT: Generate a list of at least 5 exercises that are suitable for the user's fitness level and goal.",
+    output_schema=Exercises,  # Specify the output schema for validation
+    output_key="workout_exercises",
+    tools=[],
+    # tools=[format_exercises], # Make the tool available to this agent
 )
 
-print(f"Agent '{front_agent.name}' created using model '{AGENT_MODEL}'.")
+print(f"Agent '{workout_agent.name}' created using model '{AGENT_MODEL}'.")
