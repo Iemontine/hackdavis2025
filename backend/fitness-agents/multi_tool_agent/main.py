@@ -7,7 +7,7 @@ async def main():
     # Simple interactive loop
     print("front manager is ready! Type 'exit' to quit.")
     greeting = await session_runner.call_agent_async("Hi! Help me with my fitness.")
-    print(greeting)
+    print(f"\nfront manager: {greeting}")
     while True:
         user_input = input("\nYou: ")
         if user_input.lower() == "exit":
