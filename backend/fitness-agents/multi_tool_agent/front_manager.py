@@ -35,7 +35,6 @@ front_agent = Agent(
     name="Front_Manager",
     model=AGENT_MODEL, # Specifies the underlying LLM
     description="Interacts with the user and identifies their needs", # Crucial for delegation later
-    #TODO: Replace with instructions to identify fitness goals and redirect to specific agents
     instruction="You are a helpful fitness assistant. Your primary goal is to identify the user's fitness needs and goals. "
                 "Ask the user their current height and weight."
                 "Ask the user's fitness level. Prompt to identify as beginner, intermediate, or advanced."
