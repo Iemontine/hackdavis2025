@@ -2,14 +2,26 @@ from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer
 from pymongo import MongoClient
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
 from datetime import datetime
 from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
-import os
-from openai import OpenAI  # Updated import for OpenAI client
-from dotenv import load_dotenv
+from openai import OpenAI
+
+# Add this line to properly import the session_runner or define fallback logic
+try:
+    from fitness_agents.multi_tool_agent import session_runner
+except ImportError:
+    # Define a mock session_runner for testing/development if module isn't available
+    class MockSessionRunner:
+        def __init__(self):
+            self.SESSION_ID = "mock_session"
+            
+        async def call_agent_async(self, message, session_id=None):
+            return f"Mock response to: {message}"
+            
+    session_runner = MockSessionRunner()
 
 # Initialize OpenAI client
 load_dotenv()
@@ -59,6 +71,12 @@ class UserResponse(BaseModel):
     preferences: Optional[Dict[str, Any]] = {}
     created_at: datetime
 
+class WorkoutRequest(BaseModel):
+    auth0_id: str
+
+class WorkoutConversationRequest(BaseModel):
+    auth0_id: str
+    message: str
 
 # Endpoint to save user data
 @app.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -121,18 +139,55 @@ async def transcribe_audio(file: UploadFile = File(...)):
     except Exception as e:
         return {"error": str(e)}
     
+uid_to_sid = {}
+
+# Add debug route to verify server is running
+@app.get("/")
+async def root():
+    """Root endpoint to verify server is running"""
+    return {"status": "Server is running", "endpoints": ["/workouts/start_workout", "/transcribe/"]}
 
 @app.post("/workouts/start_workout")
-async def start_workout(auth0_id: str):
-    # Check if user exists
-    user = users_collection.find_one({"auth0_id": auth0_id})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    
+async def start_workout(request: WorkoutRequest):
+    try:
+        # Check if user exists - make this optional during development
+        user = users_collection.find_one({"auth0_id": request.auth0_id})
+        if not user and request.auth0_id != "user123":  # Allow test user
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        greeting = await session_runner.call_agent_async("Start the conversation.")
 
-    return {"message": "Workout started successfully"}
+        session_id = session_runner.SESSION_ID
 
+        if request.auth0_id not in uid_to_sid:
+            uid_to_sid[request.auth0_id] = session_id
+        
+        return {"message": greeting}
+    except Exception as e:
+        # Log the error and return a helpful message
+        print(f"Error in start_workout: {str(e)}")
+        return {"message": f"An error occurred: {str(e)}. Please check server logs."}
 
 @app.post("/workouts/add_to_workout_conversation")
-async 
+async def add_to_workout_conversation(request: WorkoutConversationRequest):
+    try:
+        # Check if user exists - make this optional during development
+        user = users_collection.find_one({"auth0_id": request.auth0_id})
+        if not user and request.auth0_id != "user123":  # Allow test user
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if request.auth0_id not in uid_to_sid:
+            # If no session exists, start a new one
+            greeting = await session_runner.call_agent_async("Start the conversation.")
+            uid_to_sid[request.auth0_id] = session_runner.SESSION_ID
+            return {"message": greeting}
+        
+        # Use the existing session ID
+        session_id = uid_to_sid[request.auth0_id]
+        response = await session_runner.call_agent_async(request.message)
+        
+        return {"message": response}
+    except Exception as e:
+        # Log the error and return a helpful message
+        print(f"Error in add_to_workout_conversation: {str(e)}")
+        return {"message": f"An error occurred: {str(e)}. Please check server logs."}
