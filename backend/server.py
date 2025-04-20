@@ -130,7 +130,7 @@ async def save_user(user: User):
         "auth0_id": user.auth0_id,
         "name": user.name,
         "email": user.email,
-        "details": user.details,
+        "details": {},
         "created_at": datetime.utcnow(),
     }
 
