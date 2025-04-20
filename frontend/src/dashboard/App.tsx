@@ -33,20 +33,23 @@ const itemVariants = {
   },
 };
 
-// Define interface for MongoDB user data
+// Updated interface for MongoDB user data
 interface UserProfileData {
-  id: string;
+  _id: string;
   auth0_id: string;
   name: string;
   email: string;
-  preferences: Record<string, any>;
+  details: {
+    age: number;
+    fitness_level: string;
+    goal: string;
+    height: string;
+    weight: string;
+    workout_time: string;
+  };
+  preferences: string;
+  tailoring: string;
   created_at: string;
-  height?: string;
-  weight?: string;
-  age?: number;
-  fitness_level?: string;
-  workout_time?: string;
-  goal?: string;
 }
 
 function App() {
@@ -93,7 +96,7 @@ function App() {
           throw new Error(`Error fetching user data: ${response.status}`);
         }
 
-        const userData = await response.json();
+        const userData: UserProfileData = await response.json();
         console.log("User data from MongoDB:", userData);
         setMongoDbUser(userData);
       } catch (err) {
@@ -115,12 +118,14 @@ function App() {
     email: mongoDbUser?.email || auth0User?.email || "",
     auth0_id: mongoDbUser?.auth0_id || auth0User?.sub || "",
     picture: auth0User?.picture || "", // Auth0 picture as MongoDB doesn't store it
-    goal: mongoDbUser?.goal || "Build muscle",
-    height: mongoDbUser?.height || "5'10\"",
-    weight: mongoDbUser?.weight || "175 lbs",
-    age: mongoDbUser?.age || 28,
-    workout_time: mongoDbUser?.workout_time || "45 minutes",
-    fitness_level: mongoDbUser?.fitness_level || "Intermediate",
+    goal: mongoDbUser?.details.goal || "Build muscle",
+    height: mongoDbUser?.details.height || "5'10\"",
+    weight: mongoDbUser?.details.weight || "175 lbs",
+    age: mongoDbUser?.details.age || 28,
+    workout_time: mongoDbUser?.details.workout_time || "45 minutes",
+    fitness_level: mongoDbUser?.details.fitness_level || "Intermediate",
+    preferences: mongoDbUser?.preferences || "No preferences",
+    tailoring: mongoDbUser?.tailoring || "No tailoring information",
     lastWorkout: "Upper Body", // These aren't in MongoDB yet
     lastWorkoutDate: "Yesterday",
   };
