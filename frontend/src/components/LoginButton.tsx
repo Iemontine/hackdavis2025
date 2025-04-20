@@ -10,19 +10,22 @@ const LoginButton = () => {
       if (isAuthenticated && user) {
         try {
           const token = await getIdTokenClaims();
-          const response = await fetch(`${import.meta.env.VITE_APP_BACKEND_URL}/users/`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token?.__raw || ""}`,
-            },
-            body: JSON.stringify({
-              auth0_id: user.sub,
-              name: user.name,
-              email: user.email,
-              preferences: {}, // Add default or user-specific preferences here
-            }),
-            });
+          const response = await fetch(
+            `${import.meta.env.VITE_APP_BACKEND_URL}/users/`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token?.__raw || ""}`,
+              },
+              body: JSON.stringify({
+                auth0_id: user.sub,
+                name: user.name,
+                email: user.email,
+                preferences: {}, // Add default or user-specific preferences here
+              }),
+            }
+          );
 
           if (!response.ok) {
             console.error("Failed to save user:", await response.json());
@@ -55,7 +58,9 @@ const LoginButton = () => {
               {user.name}
             </span>
             <button
-              onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+              onClick={() =>
+                logout({ logoutParams: { returnTo: window.location.origin } })
+              }
               className="text-xs text-blue-300 hover:text-white text-left transition-colors"
             >
               Log Out
