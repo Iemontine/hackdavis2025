@@ -1,45 +1,104 @@
-import React from 'react';
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useAuth0 } from "@auth0/auth0-react";
 
-const Hero: React.FC = () => {
+function Hero() {
+  const { isAuthenticated } = useAuth0();
+  
   return (
-    <header className="relative px-6 py-20 md:py-32 flex flex-col items-center">
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-blue-500/20 to-transparent opacity-70 z-0"></div>
-      <div className="max-w-4xl text-center z-10">
-        <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-          Your Personal <span className="text-blue-400">AI</span> Fitness Coach
-        </h1>
-        <p className="text-xl md:text-2xl mb-10 text-blue-100 max-w-3xl mx-auto">
-          The complete AI-powered experience to plan, track, and guide your workouts - whether you're just starting or taking your fitness to the next level.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="bg-blue-500 hover:bg-blue-600 px-8 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105">
-            Start Your Journey
-          </button>
-          <button className="bg-transparent border-2 border-white hover:bg-white/10 px-8 py-4 rounded-lg font-bold text-lg transition-all">
-            Watch Demo
-          </button>
-        </div>
-        
-        {/* Mockup Image */}
-        <div className="mt-16 relative">
-          <div className="absolute inset-0 bg-blue-500 blur-3xl opacity-30 rounded-full"></div>
-          <div className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 p-4 rounded-3xl shadow-2xl max-w-3xl mx-auto">
-            <div className="aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-800 flex items-center justify-center">
-              <div className="text-center px-4">
-                <div className="w-20 h-20 mx-auto rounded-full bg-white/20 flex items-center justify-center mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <p className="text-blue-200 font-medium">Interactive Demo: AI-Guided Workout</p>
+    <div className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-indigo-900 to-slate-900">
+      {/* Background animated elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 right-[10%] w-96 h-96 bg-indigo-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20"
+          animate={{
+            y: [0, -30, 0],
+            scale: [1, 1.05, 1],
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 15,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute -bottom-20 left-[15%] w-80 h-80 bg-purple-600 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20"
+          animate={{
+            y: [0, 30, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 20,
+            ease: "easeInOut",
+            delay: 2,
+          }}
+        />
+      </div>
+      
+      <div className="container px-4 py-24 mx-auto sm:py-32 lg:py-40">
+        <div className="grid items-center grid-cols-1 gap-12 lg:grid-cols-2">
+          {/* Left column with text */}
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h1 className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl font-montserrat">
+                Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">AI-Powered</span> Fitness Coach
+              </h1>
+              
+              <p className="max-w-2xl mb-8 text-xl text-purple-100 sm:text-2xl">
+                Get personalized workout plans, progress tracking, and real-time guidance with our AI fitness assistant.
+              </p>
+              
+              <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                <Link
+                  to={isAuthenticated ? "/dashboard" : "/onboarding"}
+                  className="px-8 py-3 text-lg font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg hover:from-purple-500 hover:to-indigo-500 shadow-lg hover:shadow-purple-500/25 transition duration-300"
+                >
+                  Get Started
+                </Link>
+                <Link
+                  to="#how-it-works"
+                  className="px-8 py-3 text-lg font-medium text-indigo-100 bg-purple-800/30 border border-purple-400/30 rounded-lg hover:bg-purple-700/40 transition duration-300"
+                >
+                  Learn More
+                </Link>
+              </div>
+            </motion.div>
+          </div>
+          
+          {/* Right column with image/illustration */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="relative flex justify-center lg:justify-end"
+          >
+            <div className="relative w-full max-w-lg">
+              <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob"></div>
+              <div className="absolute top-0 -right-4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob animation-delay-2000"></div>
+              <div className="absolute -bottom-8 left-20 w-72 h-72 bg-violet-500 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob animation-delay-4000"></div>
+              
+              <div className="relative glass backdrop-blur-sm rounded-2xl border border-white/20 shadow-xl overflow-hidden">
+                <img 
+                  src="/workout-dashboard.webp" 
+                  alt="FitAI Dashboard Preview" 
+                  className="w-full rounded-lg"
+                  onError={(e) => {
+                    // Fallback if image fails to load
+                    e.currentTarget.src = "https://via.placeholder.com/600x400?text=FitAI+Dashboard";
+                  }} 
+                />
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-    </header>
+    </div>
   );
-};
+}
 
 export default Hero;

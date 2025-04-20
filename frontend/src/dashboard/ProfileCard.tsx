@@ -25,7 +25,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ user, isLoading }) => {
       <h2 className="text-xl font-semibold text-white mb-4 font-montserrat">Your Profile</h2>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-48">
+        <div className="flex justify-center items-center h-71">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-l-2 border-indigo-400"></div>
         </div>
       ) : (

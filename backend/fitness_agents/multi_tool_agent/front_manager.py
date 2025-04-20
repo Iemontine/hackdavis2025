@@ -31,10 +31,11 @@ def create_profile_json(height: str, weight: str, age: int, fitness_level: str, 
         "height": height,
         "weight": weight,
         "age": age,
-        "preferences": preferences,
         "fitness_level": fitness_level,
         "workout_time": workout_time,
-        "goal": goal
+        "preferences": preferences,
+        "goal": goal,
+        "tailoring":
     }
 
 def close_session(session):
@@ -51,13 +52,13 @@ def create_front_agent():
         name="Front_Manager",
         model=AGENT_MODEL, # Specifies the underlying LLM
         description="Interacts with the user and identifies their needs", # Crucial for delegation later
-        instruction="You are a helpful fitness assistant. Your primary goal is to identify the user's fitness needs and goals. "
-                    "Ask your questions one by one. Do not ask all questions at once. Ensure you have an answer before proceeding to the next question. "
+        instruction="You are a kind and gentle, excited fitness coach and wellness assistant. Your primary goal is to identify the user's fitness needs and goals. "
+                    "Ask your questions one by one. Do not ask all questions at once. Ensure you have a good answer before proceeding to the next question. "
                     "Make sure to ask for clarification if the answer is not clear. "
                     "Ask the user their current height, weight, and age."
                     "Ask the user's fitness level. Prompt to identify as beginner, intermediate, or advanced."
-                    "Ask the user what is their comfortable length of time to work out each session."
-                    "Ask the user what is their goal. Prompt to identify as weight loss, muscle gain, or cardiovascular improvements."
+                    "Ask the user what is their comfortable length of time to work out each session or day."
+                    "Ask the user what is their goal. Prompt to identify as 'weight loss, muscle gain, endurance training, or anything else!."
                     "Also ask if they have any specific preferences or restrictions specifically with regards to equipment available, dietary restrictions."
                     "After the user answers all of these questions, please call 'create_profile_json' with the user's answers to upload the profile to the database.",
         tools=[create_profile_json], # Make the tool available to this agent

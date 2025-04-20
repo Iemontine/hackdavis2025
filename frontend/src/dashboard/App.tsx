@@ -122,7 +122,7 @@ function App() {
 
               {/* Quick Actions */}
               <motion.div
-                className="glass rounded-2xl border border-white/20 p-6 transform transition duration-300 hover:border-indigo-500/30"
+                className="glass rounded-2xl border border-white/20 p-6 transform hover:border-indigo-500/30"
                 variants={itemVariants}
               >
                 <h2 className="text-xl font-semibold text-white mb-4 font-montserrat">Quick Actions</h2>
@@ -181,7 +181,7 @@ function App() {
 
               {/* Recent Activity */}
               <motion.div
-                className="glass rounded-2xl border border-white/20 p-6 transform transition duration-300 hover:border-indigo-500/30"
+                className="glass rounded-2xl border border-white/20 p-6 transform hover:border-indigo-500/30"
                 variants={itemVariants}
               >
                 <h2 className="text-xl font-semibold text-white mb-4 font-montserrat">Recent Activity</h2>
