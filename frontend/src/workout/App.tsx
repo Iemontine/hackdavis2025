@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { useAuth0 } from "@auth0/auth0-react";
+import { Link } from 'react-router-dom';
 
 function WorkoutPage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -8,15 +10,26 @@ function WorkoutPage() {
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const { user, isAuthenticated, isLoading, logout } = useAuth0();
 
-  // Start workout conversation when component mounts
+  // Start workout conversation when authenticated user is available
   useEffect(() => {
-    startWorkoutConversation();
-  }, []);
+    if (isAuthenticated && user && !isLoading) {
+      startWorkoutConversation();
+    }
+  }, [isAuthenticated, user, isLoading]);
 
   const startWorkoutConversation = async () => {
     setIsLoadingAgent(true);
-    try {      const auth0Id = "user123"; // Replace with actual user ID from authentication
+    try {
+      const auth0Id = user?.sub;
+
+      if (!auth0Id) {
+        console.error("No Auth0 ID available");
+        setAgentMessages(["Please log in to use the workout assistant."]);
+        setIsLoadingAgent(false);
+        return;
+      }
 
       const response = await fetch('http://localhost:8000/onboarding/start_onboarding', {
         method: 'POST',
@@ -104,7 +117,8 @@ function WorkoutPage() {
   const sendTranscriptionToWorkoutAssistant = async (transcription: string) => {
     setIsLoadingAgent(true);
     try {
-      const auth0Id = "user123"; // Replace with actual user ID from authentication
+      console.log(user);
+      const auth0Id = user?.sub;
 
       const response = await fetch('http://localhost:8000/workouts/add_to_workout_conversation', {
         method: 'POST',
@@ -149,14 +163,42 @@ function WorkoutPage() {
         <div className="absolute bottom-0 right-10 w-96 h-96 bg-indigo-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-15 animate-blob animation-delay-4000"></div>
         <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-purple-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-10 animate-blob animation-delay-2000"></div>
       </div>
-
-      {/* Sleek header bar */}
+      
+      {/* Sleek header bar with user profile */}
       <header className="w-full bg-black/30 backdrop-blur-md border-b border-white/10 relative z-10">
-        <div className="container mx-auto px-4 py-5 flex items-center justify-center">
-          <div className="relative">
-            <h1 className="text-2xl font-bold text-white tracking-tight">Voice Workout Assistant</h1>
-            <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent"></div>
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <Link to="/" className="text-blue-400 hover:text-blue-300 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+            </Link>
+            <h1 className="text-2xl font-bold text-white tracking-tight ml-4">Voice Workout Assistant</h1>
           </div>
+          
+          {/* Elegant user profile display */}
+          {isAuthenticated && user && (
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                {user.picture && (
+                  <div className="relative">
+                    <img 
+                      src={user.picture} 
+                      alt={user.name || "User"} 
+                      className="w-10 h-10 rounded-full border-2 border-blue-400"
+                    />
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-800"></div>
+                  </div>
+                )}
+                <button 
+                  onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+                  className="ml-3 text-sm text-blue-300 hover:text-white transition-colors"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -279,7 +321,7 @@ function WorkoutPage() {
       </main>
 
       {/* Add CSS for animations */}
-      <style jsx global>{`
+      <style>{`
         @keyframes gradient-x {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }

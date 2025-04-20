@@ -1,18 +1,20 @@
 import { useState, useRef } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useAuth0 } from "@auth0/auth0-react";
 
 function App() {
   const [activeSection, setActiveSection] = useState('dashboard');
-  const [user, setUser] = useState({
-    name: "Alex Johnson",
+  const { user, isAuthenticated, isLoading, logout } = useAuth0();
+  
+  // Default user data if not authenticated or loading
+  const userProfile = {
+    name: isAuthenticated && user?.name ? user.name : "Guest User",
     experience: "Intermediate",
     goal: "Strength",
     height: "5'10\"",
     weight: "175 lbs",
     lastWorkout: "Upper Body",
     lastWorkoutDate: "Yesterday"
-  });
+  };
 
   // References for smooth scrolling
   const dashboardRef = useRef(null);
@@ -56,14 +58,33 @@ function App() {
             </button>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <button className="flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
-                <span className="h-8 w-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-600 font-semibold">
-                  {user.name.charAt(0)}
-                </span>
-                <span className="ml-2 hidden md:inline">{user.name}</span>
+            {isLoading ? (
+              <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>
+            ) : isAuthenticated ? (
+              <div className="relative">
+                <button className="flex items-center text-gray-700 hover:text-indigo-600 transition-colors" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>
+                  {user?.picture ? (
+                    <img 
+                      src={user.picture} 
+                      alt={user.name || "User"} 
+                      className="h-8 w-8 rounded-full"
+                    />
+                  ) : (
+                    <span className="h-8 w-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-600 font-semibold">
+                      {user?.name?.charAt(0) || "?"}
+                    </span>
+                  )}
+                  <span className="ml-2 hidden md:inline">{user?.name || "User"}</span>
+                </button>
+              </div>
+            ) : (
+              <button 
+                className="text-sm bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition-colors"
+                onClick={() => window.location.href = "/"}
+              >
+                Log In
               </button>
-            </div>
+            )}
           </div>
         </div>
       </nav>
@@ -79,21 +100,21 @@ function App() {
               <div className="flex flex-col space-y-3">
                 <div className="flex items-center">
                   <div className="h-16 w-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-2xl font-bold">
-                    {user.name.charAt(0)}
+                    {userProfile.name.charAt(0)}
                   </div>
                   <div className="ml-4">
-                    <h3 className="font-semibold text-lg">{user.name}</h3>
-                    <p className="text-gray-500">{user.experience} • {user.goal}</p>
+                    <h3 className="font-semibold text-lg">{userProfile.name}</h3>
+                    <p className="text-gray-500">{userProfile.experience} • {userProfile.goal}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <p className="text-sm text-gray-500">Height</p>
-                    <p className="font-medium">{user.height}</p>
+                    <p className="font-medium">{userProfile.height}</p>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg">
                     <p className="text-sm text-gray-500">Weight</p>
-                    <p className="font-medium">{user.weight}</p>
+                    <p className="font-medium">{userProfile.weight}</p>
                   </div>
                 </div>
               </div>
@@ -141,8 +162,8 @@ function App() {
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
               <div className="space-y-4">
                 <div className="border-l-4 border-indigo-500 pl-4 py-1">
-                  <p className="font-medium">Completed {user.lastWorkout} workout</p>
-                  <p className="text-sm text-gray-500">{user.lastWorkoutDate}</p>
+                  <p className="font-medium">Completed {userProfile.lastWorkout} workout</p>
+                  <p className="text-sm text-gray-500">{userProfile.lastWorkoutDate}</p>
                 </div>
                 <div className="border-l-4 border-green-500 pl-4 py-1">
                   <p className="font-medium">Updated fitness goals</p>

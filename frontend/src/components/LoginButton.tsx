@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 
 const LoginButton = () => {
@@ -34,31 +34,38 @@ const LoginButton = () => {
     };
 
     saveUserToBackend();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, getIdTokenClaims]);
 
   return (
     <div className="flex items-center">
-      {user && user.picture && (
-        <img
-          src={user.picture}
-          alt={user.name}
-          className="w-8 h-8 rounded-full mr-2"
-        />
-      )}
-      <span className="text-gray-800 font-medium">
-        {user ? user.name : "Guest"}
-      </span>
-      {user ? (
-        <button
-          onClick={() => logout()}
-          className="ml-4 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          Log Out
-        </button>
+      {isAuthenticated && user ? (
+        <div className="flex items-center">
+          {user.picture && (
+            <div className="relative">
+              <img
+                src={user.picture}
+                alt={user.name || "User"}
+                className="w-9 h-9 rounded-full border-2 border-blue-400/50"
+              />
+              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border border-slate-800"></div>
+            </div>
+          )}
+          <div className="ml-3 flex flex-col">
+            <span className="text-sm font-medium text-white/90">
+              {user.name}
+            </span>
+            <button
+              onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+              className="text-xs text-blue-300 hover:text-white text-left transition-colors"
+            >
+              Log Out
+            </button>
+          </div>
+        </div>
       ) : (
         <button
           onClick={() => loginWithRedirect()}
-          className="ml-4 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-medium transition-colors"
+          className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-medium transition-colors"
         >
           Log In
         </button>
