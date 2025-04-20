@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import LoginButton from "./components/LoginButton";
@@ -9,14 +8,14 @@ import AgentSection from "./components/AgentSection";
 import CTASection from "./components/CTASection";
 import Footer from "./components/Footer";
 import TestApp from "./dashboard/App";
+import WorkoutPage from "./workout/App";
 
 function App() {
-  const [showMore, setShowMore] = useState(false);
-
   return (
     <Router>
       <Routes>
-        <Route path="/test" element={<TestApp />} />
+        <Route path="/workout" element={<WorkoutPage />} />
+        <Route path="/dashboard" element={<TestApp />} />
         <Route
           path="/"
           element={
@@ -26,7 +25,7 @@ function App() {
               <Hero />
               <FeaturesSection />
               <HowItWorks />
-              <TestimonialsSection />
+              <AgentSection />
               <CTASection />
               <Footer />
             </div>
