@@ -117,8 +117,8 @@ def generate_workout_id():
 @app.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def save_user(user: User):
     # Check if user has authorized email
-    if not verify_authorized_email(user.email):
-        raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
+    # if not verify_authorized_email(user.email):
+    #     raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
     
     # Check if user already exists
     existing_user = users_collection.find_one({"auth0_id": user.auth0_id})
@@ -151,8 +151,8 @@ async def get_user(auth0_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     
     # Check if user has authorized email
-    if not verify_authorized_email(user.get("email", "")):
-        raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
+    # if not verify_authorized_email(user.get("email", "")):
+    #     raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
     
     user["id"] = str(user["_id"])  # Convert ObjectId to string
     del user["_id"]  # Remove MongoDB-specific field
@@ -200,8 +200,8 @@ async def start_workout(request: WorkoutRequest):
             raise HTTPException(status_code=404, detail="User not found")
         
         # Check if user has authorized email
-        if not verify_authorized_email(user.get("email", "")):
-            raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
+        # if not verify_authorized_email(user.get("email", "")):
+        #     raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
         
         runner = session_runner.create_session_runner(user_id)
         uid_to_session[user_id] = runner
@@ -225,8 +225,8 @@ async def add_to_workout_conversation(request: WorkoutConversationRequest):
             raise HTTPException(status_code=404, detail="User not found")
         
         # Check if user has authorized email
-        if not verify_authorized_email(user.get("email", "")):
-            raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
+        # if not verify_authorized_email(user.get("email", "")):
+        #     raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
         
         if user_id not in uid_to_session:
             runner = session_runner.create_session_runner(user_id)
@@ -262,8 +262,8 @@ async def update_fitness_profile(profile_update: FitnessProfileUpdate):
             raise HTTPException(status_code=404, detail="User not found")
         
         # Check if user has authorized email
-        if not verify_authorized_email(user.get("email", "")):
-            raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
+        # if not verify_authorized_email(user.get("email", "")):
+        #     raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
         
         profile_data = profile_update.profile_json
         
@@ -310,8 +310,8 @@ async def get_user_profile(auth0_id: str):
             raise HTTPException(status_code=404, detail="User not found")
         
         # Check if user has authorized email
-        if not verify_authorized_email(user_data.get("email", "")):
-            raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
+        # if not verify_authorized_email(user_data.get("email", "")):
+        #     raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
         
         # Convert ObjectId to string for JSON serialization
         if "_id" in user_data:
@@ -335,8 +335,8 @@ async def get_workout_by_id(workout_id: str):
         creator_id = workout.get("workout", {}).get("created_by")
         if creator_id:
             creator = users_collection.find_one({"auth0_id": creator_id})
-            if creator and not verify_authorized_email(creator.get("email", "")):
-                raise HTTPException(status_code=403, detail="Access denied. Workout creator not authorized.")
+            # if creator and not verify_authorized_email(creator.get("email", "")):
+            #     raise HTTPException(status_code=403, detail="Access denied. Workout creator not authorized.")
                 
         # Workout exists, return it
         workout["_id"] = str(workout["_id"])  # Convert ObjectId to string
@@ -353,8 +353,8 @@ async def generate_workout(request: WorkoutGenerationRequest):
         user = None
         if request.auth0_id:
             user = users_collection.find_one({"auth0_id": request.auth0_id})
-            if user and not verify_authorized_email(user.get("email", "")):
-                raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
+            # if user and not verify_authorized_email(user.get("email", "")):
+            #     raise HTTPException(status_code=403, detail="Access denied. Email not authorized.")
         
         # Generate a unique workout ID
         workout_id = generate_workout_id()
