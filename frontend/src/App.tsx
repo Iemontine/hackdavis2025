@@ -7,8 +7,8 @@ import AgentSection from "./components/AgentSection";
 import CTASection from "./components/CTASection";
 import Footer from "./components/Footer";
 import TestApp from "./dashboard/App";
-import WorkoutPage from "./workout/App";
-import WorkoutSession from "./workoutsession/App";
+import WorkoutPage from "./onboarding/App";
+import WorkoutSession from "./workout/App";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Link } from "react-router-dom";
 
