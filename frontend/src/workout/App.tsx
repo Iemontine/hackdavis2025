@@ -1,386 +1,141 @@
-
-import { Hume, HumeClient } from 'hume';
-
-// instantiate the Hume client and authenticate
-const client = new HumeClient({
-  apiKey: "n8utzgEak83pmAhRy6TyRGxloCPGnJDn1w2AhuhmfZesWTIY"
-});
-
+import { useState, useRef } from 'react';
 
 function WorkoutPage() {
-  return (
-    <div>
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcription, setTranscription] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  const startRecording = async () => {
+    audioChunksRef.current = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
       
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        await sendAudioToServer(audioBlob);
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      alert("Could not access your microphone. Please check permissions.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setIsProcessing(true);
+      // Stop all audio tracks
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const sendAudioToServer = async (audioBlob: Blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'recording.wav');
+      
+      const response = await fetch('http://localhost:8000/transcribe/', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      if (data.transcription) {
+        setTranscription(data.transcription);
+      } else if (data.error) {
+        console.error("Transcription error:", data.error);
+        setTranscription("Error: Could not transcribe audio");
+      }
+    } catch (error) {
+      console.error("Error sending audio:", error);
+      setTranscription("Error: Could not send audio to server");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleMicrophoneClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center pt-12 px-4">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6">
+        <h1 className="text-2xl font-bold text-center mb-6 text-indigo-700">Voice Workout Assistant</h1>
+        
+        <div className="flex flex-col items-center">
+          <button
+            className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg transition-all ${
+              isRecording 
+                ? 'bg-red-500 animate-pulse' 
+                : 'bg-indigo-600 hover:bg-indigo-700'
+            }`}
+            onClick={handleMicrophoneClick}
+            disabled={isProcessing}
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-12 w-12 text-white" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" 
+              />
+            </svg>
+          </button>
+          
+          <p className="mt-4 font-medium">
+            {isRecording ? "Release to stop recording" : "Push to talk"}
+          </p>
+          
+          {isProcessing && (
+            <div className="mt-4 flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-700"></div>
+              <span className="ml-2">Processing...</span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-lg font-semibold mb-2">Transcription:</h2>
+          <div className="bg-gray-50 p-4 rounded-lg min-h-24 border border-gray-200">
+            {transcription ? (
+              <p>{transcription}</p>
+            ) : (
+              <p className="text-gray-500 italic">Your transcribed speech will appear here...</p>
+            )}
+          </div>
+        </div>
+        
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>Speak clearly into your microphone. Push the button, speak, then release.</p>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default WorkoutPage;
-
-
-// EVI TypeScript Quickstart
-
-// A quickstart guide for implementing the Empathic Voice Interface(EVI) with TypeScript.
-
-// This tutorial provides step - by - step instructions for implementing EVI using Hume’s TypeScript SDK
-
-//   , and is broken down into five sections:
-
-// Authentication: Instantiate the Hume client using your API credentials.
-//   Connecting to EVI: Initialize a WebSocket connection to interact with EVI.
-//     Capturing & recording audio: Capture and prepare audio input to stream over the WebSocket.
-//     Audio playback: Play back the EVI’s audio output to the user.
-//   Interruption: Client - side management of user interruptions during the chat.
-
-// This guide references our TypeScript Quickstart example project.To see the full implementation, visit our API examples repository on GitHub: evi - typescript - quickstart
-
-//   .
-// 1
-// Authenticate
-
-// To establish an authenticated connection, first instantiate the Hume client with your API credentials.Visit our Getting your API keys page for details on how to obtain your credentials.
-
-// This example uses direct API key authentication for simplicity.For production browser environments, implement the Token authentication strategy instead to prevent exposing your API key in client - side code.
-//   TypeScript
-
-// import { Hume, HumeClient } from 'hume';
-
-// // instantiate the Hume client and authenticate
-
-// const client = new HumeClient({
-
-//   apiKey: import.meta.env.HUME_API_KEY,
-
-// });
-
-// 2
-// Connect
-
-// With the Hume client instantiated with your credentials, you can now establish an authenticated WebSocket connection with EVI and assign WebSocket event handlers.For now you can include placeholder event handlers to update in later steps.
-//   TypeScript
-
-// import { Hume, HumeClient } from 'hume';
-
-// // Instantiate the Hume client and authenticate
-
-// const client = new HumeClient({
-
-//   apiKey: import.meta.env.HUME_API_KEY,
-
-// });
-
-// // Connect to EVI
-
-// const socket = await client.empathicVoice.chat.connect({
-
-//   configId: import.meta.env.HUME_CONFIG_ID,
-
-// });
-
-// // Define event handlers and assign them to WebSocket
-
-// socket.on('open', handleWebSocketOpenEvent);
-
-// socket.on('message', handleWebSocketMessageEvent);
-
-// socket.on('error', handleWebSocketErrorEvent);
-
-// socket.on('close', handleWebSocketCloseEvent);
-
-// 3
-// Audio input
-
-// Next we’ll go over capturing and streaming audio input over the WebSocket.First, handle user permissions to access the microphone.Next, use the Media Stream API to access the audio stream, and the MediaRecorder API to capture and base64 encode the audio chunks.Finally, stream the audio input by sending each chunk over the WebSocket as audio_input messages using the SDK’s sendAudioInput method.
-//   TypeScript
-
-// import {
-
-//   convertBlobToBase64,
-
-//   ensureSingleValidAudioTrack,
-
-//   getAudioStream,
-
-//   getBrowserSupportedMimeType,
-
-// } from 'hume';
-
-// /**--- Audio Recording State ---*/
-
-// let recorder: MediaRecorder | null = null;
-
-// let audioStream: MediaStream | null = null;
-
-// const mimeTypeResult = getBrowserSupportedMimeType();
-
-// const mimeType: MimeType = mimeTypeResult.success
-
-//   ? mimeTypeResult.mimeType
-
-//   : MimeType.WEBM;
-
-// // define function for capturing audio
-
-// async function startAudioCapture(): Promise<void> {
-
-//   try {
-
-//     audioStream = await getAudioStream();
-
-//     // Validate the stream
-
-//     ensureSingleValidAudioTrack(audioStream);
-
-//     recorder = new MediaRecorder(audioStream, { mimeType });
-
-//     recorder.ondataavailable = handleAudioDataAvailable;
-
-//     recorder.onerror = (event) => {
-
-//       console.error("MediaRecorder error:", event);
-
-//     }
-
-//     recorder.start(50);
-
-//   } catch (error) {
-
-//     console.error(
-
-//       "Failed to initialize or start audio capture:", error
-
-//     );
-
-//     throw error;
-
-//   }
-
-// }
-
-// // define a WebSocket open event handler to capture audio
-
-// async function handleWebSocketOpen(): Promise<void> {
-
-//   console.log('WebSocket connection opened.');
-
-//   try {
-
-//     await startAudioCapture();
-
-//   } catch (error) {
-
-//     console.error("Failed to capture audio:", error);
-
-//     alert("Failed to access microphone. Disconnecting.");
-
-//     if (
-
-//       socket &&
-
-//       socket.readyState !== WebSocket.CLOSING &&
-
-//       socket.readyState !== WebSocket.CLOSED
-
-//     ) {
-
-//       socket.close();
-
-//     }
-
-//   }
-
-// }
-
-// Accepted audio formats include: mp3, wav, aac, ogg, flac, webm, avr, cdda, cvs / vms, aiff, au, amr, mp2, mp4, ac3, avi, wmv, mpeg, ircam.
-// 4
-// Audio output
-
-// EVI responds with multiple message types over the WebSocket:
-
-// user_message: This message encapsulates the transcription of the audio input.Additionally, it includes expression measurement predictions related to the speaker’s vocal prosody.
-//   assistant_message: EVI dispatches an AssistantMessage for every sentence within the response.This message not only relays the content of the response but also features predictions regarding the expressive qualities of the generated audio response.
-//     audio_output: An AudioOutput message accompanies each AssistantMessage.This contains the actual audio(binary) response corresponding to an AssistantMessage.
-//       assistant_end: EVI delivers an AssistantEnd message as the final piece of communication, signifying the conclusion of the response to the audio input.
-
-// To play the audio output from the response, define your logic for converting the received binary to a Blob, and create an HTMLAudioElement to play the audio.
-
-// Then update the client’s message event handler to invoke the logic to play back the audio when received.To manage playback for the incoming audio, you can implement a basic queue and sequentially play back the audio.
-//   TypeScript
-
-// /**--- Audio Playback State ---*/
-
-// const audioQueue: Blob[] = [];
-
-// let currentAudio: HTMLAudioElement | null = null;
-
-// let isPlaying = false;
-
-// // Play the audio within the playback queue, converting each 
-
-// // Blob into playable HTMLAudioElements
-
-// function playNextAudioChunk(): void {
-
-//   // Don't play if already playing or queue is empty
-
-//   if (isPlaying || audioQueue.length === 0) return;
-
-//   isPlaying = true;
-
-//   const audioBlob = audioQueue.shift();
-
-//   if (!audioBlob) {
-
-//     isPlaying = false;
-
-//     return;
-
-//   }
-
-//   const audioUrl = URL.createObjectURL(audioBlob);
-
-//   currentAudio = new Audio(audioUrl);
-
-//   currentAudio.play();
-
-//   currentAudio.onended = () => {
-
-//     URL.revokeObjectURL(audioUrl);
-
-//     currentAudio = null;
-
-//     isPlaying = false;
-
-//     // Recursively play the next chunk if queue is not empty
-
-//     playNextAudioChunk();
-
-//   };
-
-// }
-
-// // define a WebSocket message event handler to play audio output
-
-// function handleWebSocketMessage(
-
-//   message: Hume.empathicVoice.SubscribeEvent
-
-// ) {
-
-//   switch (message.type) {
-
-//     case 'audio_output':
-
-//       // Decode and queue audio for playback
-
-//       const audioBlob = convertBase64ToBlob(
-
-//         message.data,
-
-//         mimeType
-
-//       );
-
-//       audioQueue.push(audioBlob);
-
-//       // Attempt to play immediately if not already playing
-
-//       playNextAudioChunk();
-
-//       break;
-
-//   }
-
-// }
-
-// 5
-// Interrupt
-
-// Interruptibility is a distinguishing feature of EVI.If you send an audio input through the WebSocket while receiving response messages for a previous audio input, the response to the previous audio input will stop.Additionally, the interface will send back a user_interruption message, and begin responding to the new audio input.
-//   TypeScript
-
-// // function for stopping the audio and clearing the queue
-
-// function stopAudioPlayback(): void {
-
-//   if (currentAudio) {
-
-//     currentAudio.pause();
-
-//     console.log("Audio playback paused.");
-
-//     if (
-
-//       currentAudio.src &&
-
-//       currentAudio.src.startsWith('blob:')
-
-//     ) {
-
-//       // Revoke URL if paused mid-play
-
-//       URL.revokeObjectURL(currentAudio.src);
-
-//     }
-
-//     currentAudio = null;
-
-//   }
-
-//   audioQueue.length = 0; // Clear the queue
-
-//   isPlaying = false; // Reset playback state
-
-// }
-
-// // update WebSocket message event handler to handle interruption
-
-// function handleWebSocketMessage(
-
-//   message: Hume.empathicVoice.SubscribeEvent
-
-// ) {
-
-//   switch (message.type) {
-
-//     case 'user_message':
-
-//       // Stop playback if user starts speaking
-
-//       stopAudioPlayback();
-
-//       break;
-
-//     case 'audio_output':
-
-//       // Decode and queue audio for playback
-
-//       const audioBlob = convertBase64ToBlob(
-
-//         message.data,
-
-//         mimeType
-
-//       );
-
-//       audioQueue.push(audioBlob);
-
-//       // Attempt to play immediately if not already playing
-
-//       playNextAudioChunk();
-
-//       break;
-
-//     case 'user_interruption':
-
-//       // Stop playback immediately when the user interrupts
-
-//       console.log("User interruption detected.");
-
-//       stopAudioPlayback();
-
-//       break;
-
-//   }
-
-// }
