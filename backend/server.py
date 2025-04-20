@@ -70,7 +70,7 @@ class UserResponse(BaseModel):
     auth0_id: str
     name: str
     email: EmailStr
-    preferences: Optional[Dict[str, Any]] = {}
+    details: Optional[Dict[str, Any]] = {}
     created_at: datetime
 
 class WorkoutRequest(BaseModel):
@@ -130,14 +130,8 @@ async def save_user(user: User):
         "auth0_id": user.auth0_id,
         "name": user.name,
         "email": user.email,
-        "preferences": user.preferences,
+        "details": user.details,
         "created_at": datetime.utcnow(),
-        "height": None,
-        "weight": None,
-        "age": 0,
-        "fitness_level": None,
-        "workout_time": None,
-        "goal": None
     }
 
     # Insert into MongoDB
@@ -170,7 +164,22 @@ async def transcribe_audio(file: UploadFile = File(...)):
     # No user-specific check here since this endpoint might be used before user creation
     # If needed, you can add authorization via headers or query params
     try:
-        return {"transcription": "My age is 25. My height is 5'9\". My weight is 150 lbs. I am a beginner. I prefer to work out for 30 minutes. My goal is to lose weight. I have no dietary restrictions OR EQUIPMENT!"}
+        # Save the uploaded file temporarily
+        temp_file_path = f"/tmp/{file.filename}"
+        with open(temp_file_path, "wb") as f:
+            f.write(await file.read())
+        
+        # Use the new OpenAI client API for transcription
+        with open(temp_file_path, "rb") as audio_file:
+            response = openai.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file
+            )
+        # Clean up the temporary file
+        os.remove(temp_file_path)
+        # Return the transcription text
+        return {"transcription": response.text}
+        # return {"transcription": "My age is 25. My height is 5'9\". My weight is 150 lbs. I am a beginner. I prefer to work out for 30 minutes. My goal is to lose weight. I have no dietary restrictions OR EQUIPMENT!"}
     except Exception as e:
         return {"error": str(e)}
             
@@ -262,13 +271,14 @@ async def update_fitness_profile(profile_update: FitnessProfileUpdate):
         result = users_collection.update_one(
             {"auth0_id": profile_update.auth0_id},
             {"$set": {
-                "height": profile_data.get("height"),
-                "weight": profile_data.get("weight"),
-                "age": profile_data.get("age"),
-                "preferences": profile_data.get("preferences"),
-                "fitness_level": profile_data.get("fitness_level"),
-                "workout_time": profile_data.get("workout_time"),
-                "goal": profile_data.get("goal")
+            "details.height": profile_data.get("height"),
+            "details.weight": profile_data.get("weight"),
+            "details.age": profile_data.get("age"),
+            "details.fitness_level": profile_data.get("fitness_level"),
+            "details.workout_time": profile_data.get("workout_time"),
+            "details.goal": profile_data.get("goal"),
+            "details.preferences": profile_data.get("preferences"),
+            "details.tailoring": profile_data.get("tailoring")
             }}
         )
         
