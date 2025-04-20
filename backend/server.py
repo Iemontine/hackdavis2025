@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional, Dict, Any
@@ -6,6 +6,13 @@ from pydantic import BaseModel
 import uvicorn
 import json
 from datetime import datetime, timedelta
+import os
+from openai import OpenAI  # Updated import for OpenAI client
+from dotenv import load_dotenv
+
+# Initialize OpenAI client
+load_dotenv()
+client = OpenAI()
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -233,6 +240,30 @@ async def complete_workout_session(
 	workout_sessions_db[session_id] = session
 	
 	return {"message": "Workout session completed"}
+
+# Transcription endpoint
+@app.post("/transcribe/")
+async def transcribe_audio(file: UploadFile = File(...)):
+    try:
+        # Save the uploaded file temporarily
+        temp_file_path = f"/tmp/{file.filename}"
+        with open(temp_file_path, "wb") as f:
+            f.write(await file.read())
+        
+        # Use the new OpenAI client API for transcription
+        with open(temp_file_path, "rb") as audio_file:
+            response = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file
+            )
+        
+        # Clean up the temporary file
+        os.remove(temp_file_path)
+        
+        # Return the transcription text
+        return {"transcription": response.text}
+    except Exception as e:
+        return {"error": str(e)}
 
 # Run the application
 if __name__ == "__main__":
