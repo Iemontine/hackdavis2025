@@ -9,7 +9,11 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from fitness_agents.multi_tool_agent import session_runner
+import json
+import traceback
 
+# important globals
+uid_to_session = {}
 
 # Initialize OpenAI client
 load_dotenv()
@@ -69,11 +73,7 @@ class WorkoutConversationRequest(BaseModel):
 # Add new Pydantic model for fitness profile updates
 class FitnessProfileUpdate(BaseModel):
     auth0_id: str
-    height: str
-    weight: str
-    fitness_level: str
-    workout_time: str
-    goal: str
+    profile_json: Dict[str, Any]
 
 # Endpoint to create a new user
 @app.post("/users/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -123,42 +123,43 @@ async def get_user(auth0_id: str):
 async def transcribe_audio(file: UploadFile = File(...)):
     try:
         # Save the uploaded file temporarily
-        temp_file_path = f"/tmp/{file.filename}"
-        with open(temp_file_path, "wb") as f:
-            f.write(await file.read())
+        # temp_file_path = f"/tmp/{file.filename}"
+        # with open(temp_file_path, "wb") as f:
+        #     f.write(await file.read())
         
-        # Use the new OpenAI client API for transcription
-        with open(temp_file_path, "rb") as audio_file:
-            response = openai.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_file
-            )
-        # Clean up the temporary file
-        os.remove(temp_file_path)
+        # # Use the new OpenAI client API for transcription
+        # with open(temp_file_path, "rb") as audio_file:
+        #     response = openai.audio.transcriptions.create(
+        #         model="whisper-1",
+        #         file=audio_file
+        #     )
+        # # Clean up the temporary file
+        # os.remove(temp_file_path)
         # Return the transcription text
-        return {"transcription": response.text}
+        return {"transcription": "My age is 25. My height is 5'9\". My weight is 150 lbs. I am a beginner. I prefer to work out for 30 minutes. My goal is to lose weight. I have no dietary restrictions OR EQUIPMENT!"}
+        # return {"transcription": response.text}
     except Exception as e:
         return {"error": str(e)}
             
-uid_to_sid = {}
-
 # Add debug route to verify server is running
 @app.get("/")
 async def root():
     """Root endpoint to verify server is running"""
-    return {"status": "Server is running", "endpoints": ["/workouts/start_workout", "/transcribe/"]}
+    return {"status": "Server is running", "endpoints": ["/onboarding/start_onboarding", "/transcribe/"]}
 
-@app.post("/workouts/start_workout")
+@app.post("/onboarding/start_onboarding")
 async def start_workout(request: WorkoutRequest):
     try:
         # Check if user exists - make this optional during development
-        user = users_collection.find_one({"auth0_id": request.auth0_id})
-        if not user and request.auth0_id != "user123":  # Allow test user
-            raise HTTPException(status_code=404, detail="User not found")
-        greeting = await session_runner.call_agent_async("Start the conversation.")
-        session_id = session_runner.SESSION_ID
-        if request.auth0_id not in uid_to_sid:
-            uid_to_sid[request.auth0_id] = session_id
+        user_id = request.auth0_id
+        user = users_collection.find_one({"auth0_id": user_id})
+        if user_id not in uid_to_session:
+            runner = session_runner.create_session_runner(user_id)
+            uid_to_session[user_id] = runner
+            greeting = await session_runner.call_agent_async("Start the conversation.", runner, user_id)
+        else:
+            runner = uid_to_session[user_id]
+            greeting = session_runner.call_agent_async("Continue the conversation.", runner, user_id)
         return {"message": greeting}
     except Exception as e:
         # Log the error and return a helpful message
@@ -169,18 +170,16 @@ async def start_workout(request: WorkoutRequest):
 async def add_to_workout_conversation(request: WorkoutConversationRequest):
     try:
         # Check if user exists - make this optional during development
-        user = users_collection.find_one({"auth0_id": request.auth0_id})
-        if not user and request.auth0_id != "user123":  # Allow test user
-            raise HTTPException(status_code=404, detail="User not found")
-        if request.auth0_id not in uid_to_sid:
-            # If no session exists, start a new one
-            greeting = await session_runner.call_agent_async("Start the conversation.")
-            uid_to_sid[request.auth0_id] = session_runner.SESSION_ID
+        user_id = request.auth0_id
+        user = users_collection.find_one({"auth0_id": user_id})
+        if user_id not in uid_to_session:
+            runner = session_runner.create_session_runner(user_id)
+            uid_to_session[user_id] = runner
+            greeting = await session_runner.call_agent_async("Start the conversation.", runner, user_id)
             return {"message": greeting}
-        # Use the existing session ID
-        session_id = uid_to_sid[request.auth0_id]
-        response = await session_runner.call_agent_async(request.message)
-
+        else:
+            runner = uid_to_session[user_id]
+            response = await session_runner.call_agent_async(request.message, runner, user_id)
         return {"message": response}
     except Exception as e:
         # Log the error and return a helpful message
@@ -190,23 +189,37 @@ async def add_to_workout_conversation(request: WorkoutConversationRequest):
 # Separate endpoint to update user fitness profile
 @app.post("/users/update-fitness-profile")
 async def update_fitness_profile(profile_update: FitnessProfileUpdate):
+    print("=" * 50)
+    print("CALLED update_fitness_profile ENDPOINT")
+    print(profile_update)
+    print(f"Received update for user: {profile_update.auth0_id}")
+    print(f"With profile data: {profile_update.profile_json}")
+    print("=" * 50)
+
     try:
         # Check if user exists
         user = users_collection.find_one({"auth0_id": profile_update.auth0_id})
         if not user:
+            print(f"User not found: {profile_update.auth0_id}")
             raise HTTPException(status_code=404, detail="User not found")
+        
+        profile_data = profile_update.profile_json
         
         # Update user with fitness profile information
         result = users_collection.update_one(
             {"auth0_id": profile_update.auth0_id},
             {"$set": {
-                "height": profile_update.height,
-                "weight": profile_update.weight,
-                "fitness_level": profile_update.fitness_level,
-                "workout_time": profile_update.workout_time,
-                "goal": profile_update.goal
+                "height": profile_data.get("height"),
+                "weight": profile_data.get("weight"),
+                "age": profile_data.get("age"),
+                "preferences": profile_data.get("preferences"),
+                "fitness_level": profile_data.get("fitness_level"),
+                "workout_time": profile_data.get("workout_time"),
+                "goal": profile_data.get("goal")
             }}
         )
+        
+        print(f"Update result: modified_count={result.modified_count}")
         
         if result.modified_count == 0:
             # If no document was modified, it might be due to the document already having the same values
@@ -217,4 +230,6 @@ async def update_fitness_profile(profile_update: FitnessProfileUpdate):
     
     except Exception as e:
         print(f"Error updating fitness profile: {str(e)}")
+        traceback_str = traceback.format_exc()
+        print(f"Traceback: {traceback_str}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
