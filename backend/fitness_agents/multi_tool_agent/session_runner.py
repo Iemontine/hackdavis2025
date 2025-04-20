@@ -71,7 +71,7 @@ async def call_agent_async(query: str, runner: Runner, user_id: str) -> str:
                 # Make a POST request to update the fitness profile in a non-blocking way
                 import threading
                 def send_profile_update():
-                    url = "http://localhost:8000/users/update-fitness-profile"
+                    url = os.getenv("FRONTEND_URL", "http://localhost:8000") + "/users/update-fitness-profile"
                     headers = {"Content-Type": "application/json"}
                     
                     print(f"Function response received: {profile_json}")

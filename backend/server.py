@@ -196,6 +196,7 @@ async def start_workout(request: WorkoutRequest):
         
         if user_id not in uid_to_session:
             runner = session_runner.create_session_runner(user_id)
+            print("SCREW YOU", runner)
             uid_to_session[user_id] = runner
             greeting = await session_runner.call_agent_async("Start the conversation.", runner, user_id)
         else:
@@ -282,6 +283,9 @@ async def update_fitness_profile(profile_update: FitnessProfileUpdate):
             # If no document was modified, it might be due to the document already having the same values
             # In this case, we still want to return success
             return {"message": "Profile already up to date or no changes needed"}
+        else:
+            uid_to_session.pop(profile_update.auth0_id, None)  # Clear session if it exists
+            print(f"Session cleared for user: {profile_update.auth0_id}")
         
         return {"message": "Fitness profile updated successfully"}
     

@@ -11,8 +11,8 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
 		<Auth0Provider
-			domain={process.env.REACT_APP_AUTH0_DOMAIN as string} // Replace with your actual Auth0 domain from .env
-			clientId={process.env.REACT_APP_AUTH0_CLIENT_ID as string} // Replace with your actual Auth0 client ID from .env
+			domain={import.meta.env.VITE_AUTH0_DOMAIN as string} // Replace with your actual Auth0 domain from .env
+			clientId={import.meta.env.VITE_AUTH0_CLIENT_ID as string} // Replace with your actual Auth0 client ID from .env
 			authorizationParams={{
 			redirect_uri: window.location.origin,
 			scope: "openid profile email"

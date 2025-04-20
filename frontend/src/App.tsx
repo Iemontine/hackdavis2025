@@ -116,16 +116,6 @@ function Header() {
             <>
               <Link to="/dashboard" className="text-blue-300 hover:text-white transition-colors font-medium">Dashboard</Link>
               <div className="flex items-center space-x-2">
-                {user?.picture && (
-                  <div className="relative">
-                    <img
-                      src={user.picture}
-                      alt={user.name || "User"}
-                      className="w-8 h-8 rounded-full border-2 border-indigo-400 object-cover"
-                    />
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border border-slate-800"></div>
-                  </div>
-                )}
                 <LoginButton />
               </div>
             </>

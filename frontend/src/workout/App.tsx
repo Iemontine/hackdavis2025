@@ -133,6 +133,7 @@ function WorkoutSession() {
           setWorkout(data.workout);
           setWorkoutUrl(`${window.location.origin}/workout/${data.workout_id}`);
         } else {
+          console.log(import.meta.env.VITE_APP_BACKEND_URL);
           const response = await fetch('http://localhost:8000/workout/generate', {
             method: 'POST',
             headers: {

@@ -10,7 +10,7 @@ const LoginButton = () => {
       if (isAuthenticated && user) {
         try {
           const token = await getIdTokenClaims();
-          const response = await fetch("http://localhost:8000/users/", {
+          const response = await fetch(`${import.meta.env.VITE_APP_BACKEND_URL}/users/`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -22,7 +22,7 @@ const LoginButton = () => {
               email: user.email,
               preferences: {}, // Add default or user-specific preferences here
             }),
-          });
+            });
 
           if (!response.ok) {
             console.error("Failed to save user:", await response.json());
