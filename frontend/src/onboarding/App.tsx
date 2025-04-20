@@ -302,18 +302,17 @@ function WorkoutPage() {
         </div>
       </header>
 
-      {/* Main content in a responsive grid layout */}
-      <main className="flex-1 container mx-auto px-4 py-8 md:py-12 relative z-10">
+      {/* Main content area with improved responsive layout */}
+      <main className="flex-1 container mx-auto px-4 py-6 md:py-10 relative z-10">
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8"
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-
-          {/* Assistant panel - larger on desktop */}
-          <motion.div className="lg:col-span-7 xl:col-span-8" variants={itemVariants}>
-            <div className="h-full glass rounded-2xl border border-white/20 overflow-hidden shadow-xl">
+          {/* Assistant panel - larger on desktop, stacks on top for mobile */}
+          <motion.div className="lg:col-span-7 xl:col-span-8 order-2 lg:order-1" variants={itemVariants}>
+            <div className="h-[500px] md:h-[600px] glass rounded-2xl border border-white/20 overflow-hidden shadow-xl">
               <div className="px-6 py-4 border-b border-white/10 flex items-center bg-white/5">
                 <div className="w-3 h-3 rounded-full bg-blue-400 animate-pulse mr-3"></div>
                 <h2 className="text-lg font-semibold text-white/90 font-montserrat">FitAI Assistant</h2>
@@ -321,26 +320,19 @@ function WorkoutPage() {
               <div className="p-6 h-[calc(100%-62px)] overflow-y-auto">
                 {isLoadingAgent ? (
                   <div className="flex flex-col items-center justify-center py-12">
-                    <div className="loader w-12 h-12"></div>
+                    <div className="loader w-12 h-12 border-t-2 border-blue-500 border-r-2 rounded-full animate-spin"></div>
                     <span className="mt-4 text-blue-200 font-medium animate-pulse">Connecting to AI...</span>
                   </div>
                 ) : agentMessages.length > 0 ? (
-                  <div className="space-y-6">
-                    {agentMessages.map((message, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10"
-                      >
-                        <p className="text-white/90 leading-relaxed text-lg">
-                          {message}
-                        </p>
-                      </motion.div>
-                    ))}
-                    <div ref={messagesEndRef} />
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10"
+                  >
+                    <p className="text-white/90 leading-relaxed text-lg">
+                      {agentMessages[agentMessages.length - 1]}
+                    </p>
+                  </motion.div>
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <motion.p
@@ -357,11 +349,11 @@ function WorkoutPage() {
             </div>
           </motion.div>
 
-          {/* Controls and transcription panel */}
-          <motion.div className="lg:col-span-5 xl:col-span-4 space-y-6" variants={itemVariants}>
-            {/* Interactive microphone control */}
-            <div className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl p-6 flex flex-col items-center">
-              <div className="relative">
+          {/* Controls panel - right side on desktop, below on mobile */}
+          <motion.div className="lg:col-span-5 xl:col-span-4 order-1 lg:order-2 flex flex-col h-[500px] md:h-[600px]" variants={itemVariants}>
+            {/* Microphone control with integrated instructions */}
+            <div className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl p-6 flex flex-col items-center mb-6 h-[240px] md:h-[290px]">
+              <div className="relative w-full flex flex-col items-center">
                 <AnimatePresence>
                   {showTooltip && !isRecording && (
                     <motion.div
@@ -375,11 +367,12 @@ function WorkoutPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+                
                 <motion.button
-                  className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all ${isRecording
-                      ? 'bg-gradient-to-r from-red-600 to-pink-600'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
-                    }`}
+                  className={`relative w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center transition-all ${isRecording
+                    ? 'bg-gradient-to-r from-red-600 to-pink-600'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                  }`}
                   onClick={handleMicrophoneClick}
                   disabled={isProcessing}
                   whileHover={!isRecording ? { scale: 1.05, boxShadow: '0 0 15px rgba(79, 70, 229, 0.6)' } : {}}
@@ -438,52 +431,62 @@ function WorkoutPage() {
               </div>
 
               <motion.p
-                className="mt-5 font-medium text-white/90 text-lg"
+                className="mt-4 font-medium text-white/90 text-lg"
                 variants={pulseVariants}
                 initial="initial"
                 animate={isRecording ? "pulse" : "initial"}
               >
                 {isRecording ? "Recording... Press to stop" : "Tap to Speak"}
               </motion.p>
+              
+              {/* Tutorial text */}
+              <div className="mt-2 text-center px-2">
+                <p className="text-white/70 text-sm">
+                  Tap the microphone, speak clearly about your workout goals, then release to get AI guidance.
+                </p>
+              </div>
 
-              {isRecording && (
-                <div className="mt-4">
-                  <svg width="60" height="30" viewBox="0 0 60 30">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((i) => (
-                      <motion.path
-                        key={i}
-                        d={`M${i * 4 + 2},15 Q${i * 4 + 3},${Math.random() * 10 + 10} ${i * 4 + 4},15`}
-                        stroke="#38bdf8"
-                        strokeWidth="2"
-                        fill="none"
-                        initial="initial"
-                        animate="animate"
-                        variants={waveVariants}
-                        custom={i}
-                      />
-                    ))}
-                  </svg>
-                </div>
-              )}
+              {/* Recording animation and processing indicator */}
+              <div className="mt-auto">
+                {isRecording && (
+                  <div className="mt-2 mb-2">
+                    <svg width="60" height="30" viewBox="0 0 60 30">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((i) => (
+                        <motion.path
+                          key={i}
+                          d={`M${i * 4 + 2},15 Q${i * 4 + 3},${Math.random() * 10 + 10} ${i * 4 + 4},15`}
+                          stroke="#38bdf8"
+                          strokeWidth="2"
+                          fill="none"
+                          initial="initial"
+                          animate="animate"
+                          variants={waveVariants}
+                          custom={i}
+                        />
+                      ))}
+                    </svg>
+                  </div>
+                )}
 
-              {isProcessing && (
-                <motion.div
-                  className="mt-4 flex items-center glass-dark rounded-full px-4 py-2"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <svg className="animate-spin h-4 w-4 text-blue-400 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span className="text-blue-200 font-medium">Processing...</span>
-                </motion.div>
-              )}
+                {isProcessing && (
+                  <motion.div
+                    className="mt-2 flex items-center glass-dark rounded-full px-4 py-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <svg className="animate-spin h-4 w-4 text-blue-400 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span className="text-blue-200 font-medium">Processing...</span>
+                  </motion.div>
+                )}
+              </div>
             </div>
 
-            {/* Transcription display */}
+            {/* Transcription display - sized to fill remaining space */}
             <motion.div
-              className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl"
+              className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl flex-grow"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -495,7 +498,7 @@ function WorkoutPage() {
                 <h2 className="text-base font-medium text-white/90">Your Voice Input</h2>
               </div>
 
-              <div className="p-6 min-h-[120px]">
+              <div className="p-6 h-[calc(100%-62px)] overflow-y-auto">
                 <AnimatePresence mode="wait">
                   {transcription ? (
                     <motion.p
@@ -508,37 +511,17 @@ function WorkoutPage() {
                       {transcription}
                     </motion.p>
                   ) : (
-                    <motion.p
+                    <motion.div
                       key="placeholder"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-white/40 italic text-center"
+                      className="text-white/40 italic text-center flex items-center justify-center h-full"
                     >
-                      Your voice will be transcribed here...
-                    </motion.p>
+                      <p>Your voice will be transcribed here...</p>
+                    </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
-            </motion.div>
-
-            {/* Instruction panel */}
-            <motion.div
-              className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl p-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="flex items-center text-left">
-                <div className="flex-shrink-0 bg-blue-500/20 rounded-lg p-2 mr-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-white/90 font-medium mb-1">How to use</h3>
-                  <p className="text-white/70 text-sm">Tap the microphone button, speak clearly about your workout goals, then release to get AI guidance.</p>
-                </div>
               </div>
             </motion.div>
           </motion.div>
