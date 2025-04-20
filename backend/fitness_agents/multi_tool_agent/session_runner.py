@@ -60,6 +60,7 @@ async def call_agent_async(query: str):
         # You can uncomment the line below to see *all* events during execution
         # print(f"  [Event] Author: {event.author}, Type: {type(event).__name__}, Final: {event.is_final_response()}, Content: {event.content}")
         # Key Concept: is_final_response() marks the concluding message for the turn.
+        print(event)
         if event.is_final_response():
             if event.content and event.content.parts:
                 # Assuming text response in the first part

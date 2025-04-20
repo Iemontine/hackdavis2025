@@ -8,20 +8,8 @@ from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
+from fitness_agents.multi_tool_agent import session_runner
 
-# Add this line to properly import the session_runner or define fallback logic
-try:
-    from fitness_agents.multi_tool_agent import session_runner
-except ImportError:
-    # Define a mock session_runner for testing/development if module isn't available
-    class MockSessionRunner:
-        def __init__(self):
-            self.SESSION_ID = "mock_session"
-            
-        async def call_agent_async(self, message, session_id=None):
-            return f"Mock response to: {message}"
-            
-    session_runner = MockSessionRunner()
 
 # Initialize OpenAI client
 load_dotenv()
@@ -185,7 +173,7 @@ async def add_to_workout_conversation(request: WorkoutConversationRequest):
         # Use the existing session ID
         session_id = uid_to_sid[request.auth0_id]
         response = await session_runner.call_agent_async(request.message)
-        
+
         return {"message": response}
     except Exception as e:
         # Log the error and return a helpful message
