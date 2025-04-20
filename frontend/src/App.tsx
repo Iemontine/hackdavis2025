@@ -9,6 +9,7 @@ import CTASection from "./components/CTASection";
 import Footer from "./components/Footer";
 import TestApp from "./dashboard/App";
 import WorkoutPage from "./workout/App";
+import WorkoutSession from "./workoutsession/App";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/workout" element={<WorkoutPage />} />
         <Route path="/dashboard" element={<TestApp />} />
+        <Route path="/workoutsession" element={<WorkoutSession />} />
         <Route
           path="/"
           element={
