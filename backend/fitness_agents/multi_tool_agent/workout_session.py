@@ -55,7 +55,7 @@ async def call_workout_agent_async(query: str):
 
     # Key Concept: run_async executes the agent logic and yields Events.
     # We iterate through events to find the final answer.
-    async for event in runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content):
+    async for event in runner.run_async (user_id=USER_ID, session_id=SESSION_ID, new_message=content):
         # You can uncomment the line below to see *all* events during execution
         # print(f"  [Event] Author: {event.author}, Type: {type(event).__name__}, Final: {event.is_final_response()}, Content: {event.content}")
 

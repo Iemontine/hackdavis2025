@@ -43,7 +43,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/workout" element={<WorkoutPage />} />
+        <Route path="/onboarding" element={<WorkoutPage />} />
         <Route path="/dashboard" element={<TestApp />} />
         <Route path="/workoutsession" element={<WorkoutSession />} />
         <Route
