@@ -224,7 +224,7 @@ async def update_fitness_profile(profile_update: FitnessProfileUpdate):
 async def get_user_profile(auth0_id: str):
     try:
         # Look up user in your database
-        user_data = await users_collection.find_one({"auth0_id": auth0_id})
+        user_data = users_collection.find_one({"auth0_id": auth0_id})
         
         if not user_data:
             raise HTTPException(status_code=404, detail="User not found")
