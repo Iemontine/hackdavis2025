@@ -1,85 +1,104 @@
 import { useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import ProfileCard from './ProfileCard';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { Line } from 'react-chartjs-2';
+import { Chart, registerables } from 'chart.js';
+
+// Register Chart.js components
+Chart.register(...registerables);
+
+// Stagger animation for children elements
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: "easeOut"
+    }
+  }
+};
 
 function App() {
-  const [activeSection, setActiveSection] = useState('dashboard');
-  const { user: auth0User, isAuthenticated, isLoading } = useAuth0();
+  const { user: auth0User, isLoading } = useAuth0();
+  const [workoutData, setWorkoutData] = useState({
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [
+      {
+        label: 'Workout Duration (minutes)',
+        data: [30, 45, 0, 60, 0, 0, 0],
+        borderColor: '#818cf8', // Lighter indigo for dark theme
+        backgroundColor: 'rgba(129, 140, 248, 0.2)', // Semi-transparent indigo
+        tension: 0.3,
+        fill: true
+      }
+    ]
+  });
 
   // References for smooth scrolling
-  const dashboardRef = useRef(null);
-  const featuresRef = useRef(null);
-  const agentsRef = useRef(null);
+  const dashboardRef = useRef<HTMLDivElement | null>(null);
 
   // Create a user profile object directly from Auth0 data
   const user = {
     name: auth0User?.name || "Anonymous User",
     email: auth0User?.email || "",
     auth0_id: auth0User?.sub || "",
-    experience: "Not specified",
-    goal: "Not specified",
-    height: "Not specified",
-    weight: "Not specified",
-    age: 0,
-    workout_time: "Not specified",
-    fitness_level: "Not specified",
-    lastWorkout: "None yet", // You might want to add these fields to your backend
-    lastWorkoutDate: "N/A"
-  };
-
-  // Scroll to section function
-  const scrollToSection = (section) => {
-    setActiveSection(section);
-    if (section === 'dashboard') dashboardRef.current?.scrollIntoView({ behavior: 'smooth' });
-    if (section === 'features') featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
-    if (section === 'agents') agentsRef.current?.scrollIntoView({ behavior: 'smooth' });
+    picture: auth0User?.picture || "", // Add picture from Auth0
+    experience: "Intermediate",
+    goal: "Build muscle",
+    height: "5'10\"",
+    weight: "175 lbs",
+    age: 28,
+    workout_time: "45 minutes",
+    fitness_level: "Intermediate",
+    lastWorkout: "Upper Body",
+    lastWorkoutDate: "Yesterday"
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white">
       {/* Navigation Bar */}
-      <nav className="bg-white shadow-md px-6 py-4 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      <nav className="glass-dark sticky top-0 z-10 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-indigo-600">FitAI</h1>
-          </div>
-          <div className="hidden md:flex space-x-8">
-            <button
-              onClick={() => scrollToSection('dashboard')}
-              className={`${activeSection === 'dashboard' ? 'text-indigo-600' : 'text-gray-600'} hover:text-indigo-500 transition-colors`}
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => scrollToSection('features')}
-              className={`${activeSection === 'features' ? 'text-indigo-600' : 'text-gray-600'} hover:text-indigo-500 transition-colors`}
-            >
-              Features
-            </button>
-            <button
-              onClick={() => scrollToSection('agents')}
-              className={`${activeSection === 'agents' ? 'text-indigo-600' : 'text-gray-600'} hover:text-indigo-500 transition-colors`}
-            >
-              AI Agents
-            </button>
+            <Link to="/" className="font-montserrat text-2xl font-bold flex items-baseline">
+              <span className="text-indigo-400 mr-1">Fit</span>
+              <span className="text-white">AI</span>
+            </Link>
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
               {auth0User?.picture ? (
                 <div className="relative">
-                  <img
-                    src={auth0User.picture}
-                    alt={auth0User.name || "User"}
-                    className="w-8 h-8 rounded-full border-2 border-indigo-400/50"
-                  />
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border border-white"></div>
+                  <motion.div whileHover={{ scale: 1.1 }}>
+                    <img
+                      src={auth0User.picture}
+                      alt={auth0User.name || "User"}
+                      className="w-10 h-10 rounded-full border-2 border-indigo-400 object-cover"
+                    />
+                  </motion.div>
+                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border border-slate-800"></div>
                 </div>
               ) : (
-                <div className="h-8 w-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-600 font-semibold">
+                <div className="h-10 w-10 rounded-full bg-indigo-500/30 flex items-center justify-center text-white font-semibold">
                   {auth0User?.name?.charAt(0) || "?"}
                 </div>
               )}
-              <span className="ml-2 hidden md:inline">{auth0User?.name || "User"}</span>
+              <span className="ml-3 hidden md:inline font-medium text-white/90">{auth0User?.name || "User"}</span>
             </div>
           </div>
         </div>
@@ -88,100 +107,214 @@ function App() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Dashboard Section */}
-        <section ref={dashboardRef} className="py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* User Profile Card */}
-            <ProfileCard user={user} isLoading={isLoading} />
+        <motion.section
+          ref={dashboardRef}
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
+          <div className="py-8">
+            <motion.div className="grid grid-cols-1 lg:grid-cols-3 gap-6" variants={containerVariants}>
+              {/* User Profile Card */}
+              <motion.div variants={itemVariants}>
+                <ProfileCard user={user} isLoading={isLoading} />
+              </motion.div>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-lg p-6 transform transition duration-300 hover:scale-105">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <button className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-lg flex flex-col items-center justify-center transition-transform transform hover:scale-105">
-                  <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <span>Start Workout</span>
-                </button>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-lg flex flex-col items-center justify-center transition-transform transform hover:scale-105">
-                  <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                  </svg>
-                  <span>Plan Workout</span>
-                </button>
-                <button className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-lg flex flex-col items-center justify-center transition-transform transform hover:scale-105">
-                  <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
-                  <span>Progress</span>
-                </button>
-                <button className="bg-purple-500 hover:bg-purple-600 text-white p-4 rounded-lg flex flex-col items-center justify-center transition-transform transform hover:scale-105">
-                  <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                  <span>Schedule</span>
-                </button>
-              </div>
-            </div>
+              {/* Quick Actions */}
+              <motion.div
+                className="glass rounded-2xl border border-white/20 p-6 transform transition duration-300 hover:border-indigo-500/30"
+                variants={itemVariants}
+              >
+                <h2 className="text-xl font-semibold text-white mb-4 font-montserrat">Quick Actions</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <Link to="/workout" className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-xl flex flex-col items-center justify-center transition-transform hover:-translate-y-1">
+                    <svg
+                      className="w-6 h-6 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span className="font-medium">Start Workout</span>
+                  </Link>
+                  <Link to="/onboarding" className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl flex flex-col items-center justify-center transition-transform hover:-translate-y-1">
+                    <svg
+                      className="w-6 h-6 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                    </svg>
+                    <span className="font-medium">Plan Workout</span>
+                  </Link>
+                  <button className="bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-xl flex flex-col items-center justify-center transition-transform hover:-translate-y-1">
+                    <svg
+                      className="w-6 h-6 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span className="font-medium">Progress</span>
+                  </button>
+                  <button className="bg-violet-600 hover:bg-violet-700 text-white p-4 rounded-xl flex flex-col items-center justify-center transition-transform hover:-translate-y-1">
+                    <svg
+                      className="w-6 h-6 mb-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span className="font-medium">Schedule</span>
+                  </button>
+                </div>
+              </motion.div>
 
-            {/* Recent Activity */}
-            <div className="bg-white rounded-xl shadow-lg p-6 transform transition duration-300 hover:scale-105">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h2>
-              <div className="space-y-4">
-                <div className="border-l-4 border-indigo-500 pl-4 py-1">
-                  <p className="font-medium">Completed {user.lastWorkout} workout</p>
-                  <p className="text-sm text-gray-500">{user.lastWorkoutDate}</p>
+              {/* Recent Activity */}
+              <motion.div
+                className="glass rounded-2xl border border-white/20 p-6 transform transition duration-300 hover:border-indigo-500/30"
+                variants={itemVariants}
+              >
+                <h2 className="text-xl font-semibold text-white mb-4 font-montserrat">Recent Activity</h2>
+                <div className="space-y-4">
+                  <div className="border-l-4 border-indigo-500 pl-4 py-2 bg-indigo-900/30 rounded-r-lg">
+                    <p className="font-medium text-white/90">Completed {user.lastWorkout} workout</p>
+                    <p className="text-sm text-white/60">{user.lastWorkoutDate}</p>
+                  </div>
+                  <div className="border-l-4 border-emerald-500 pl-4 py-2 bg-emerald-900/30 rounded-r-lg">
+                    <p className="font-medium text-white/90">Updated fitness goals</p>
+                    <p className="text-sm text-white/60">1 week ago</p>
+                  </div>
+                  <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-900/30 rounded-r-lg">
+                    <p className="font-medium text-white/90">Added new personal record</p>
+                    <p className="text-sm text-white/60">1 week ago</p>
+                  </div>
                 </div>
-                <div className="border-l-4 border-green-500 pl-4 py-1">
-                  <p className="font-medium">Updated fitness goals</p>
-                  <p className="text-sm text-gray-500">1 week ago</p>
+                <div className="mt-6">
+                  <button className="w-full py-2 border border-white/30 text-white/90 rounded-lg hover:bg-white/10 transition-colors">
+                    View All Activity
+                  </button>
                 </div>
-                <div className="border-l-4 border-blue-500 pl-4 py-1">
-                  <p className="font-medium">Added new personal record</p>
-                  <p className="text-sm text-gray-500">1 week ago</p>
+              </motion.div>
+            </motion.div>
+
+            {/* Weekly Overview and Fitness Analytics */}
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Weekly Progress */}
+              <motion.div
+                className="glass rounded-2xl border border-white/20 p-6"
+                variants={itemVariants}
+              >
+                <h2 className="text-xl font-semibold text-white mb-4 font-montserrat">Weekly Progress</h2>
+                <div className="h-64 bg-slate-900/50 p-4 rounded-xl">
+                  <Line
+                    data={workoutData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          display: true,
+                          position: 'top',
+                          labels: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                          }
+                        }
+                      },
+                      scales: {
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                          },
+                          ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                          }
+                        },
+                        x: {
+                          grid: {
+                            display: false
+                          },
+                          ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                          }
+                        }
+                      }
+                    }}
+                  />
                 </div>
-              </div>
-              <div className="mt-6">
-                <button className="w-full py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                  View All Activity
-                </button>
-              </div>
+                <div className="mt-4 flex justify-between text-sm text-white/70">
+                  <span>2 Workouts Completed</span>
+                  <span>Goal: 4 Workouts/week</span>
+                </div>
+              </motion.div>
+
+              {/* Weekly Schedule */}
+              <motion.div
+                className="glass rounded-2xl border border-white/20 p-6"
+                variants={itemVariants}
+              >
+                <h2 className="text-xl font-semibold text-white mb-4 font-montserrat">Weekly Schedule</h2>
+                <div className="grid grid-cols-7 gap-3">
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+                    <motion.div
+                      key={day}
+                      className={`p-4 rounded-xl border ${index === 1 ? 'bg-indigo-900/50 border-indigo-500/50' :
+                          index === 2 ? 'bg-violet-900/50 border-violet-500/50' :
+                            'bg-slate-800/50 border-slate-700/50'
+                        }`}
+                      whileHover={{ y: -5, boxShadow: '0 4px 20px rgba(79, 70, 229, 0.3)' }}
+                    >
+                      <p className="text-center font-medium text-white/90">{day}</p>
+                      <div className="mt-2 h-2 rounded-full bg-slate-700 overflow-hidden">
+                        <div
+                          className={`h-2 rounded-full ${index === 1 ? 'bg-indigo-500' :
+                              index === 2 ? 'bg-violet-500' :
+                                index < 1 ? 'bg-emerald-500' : 'bg-slate-700'
+                            }`}
+                          style={{ width: index < 2 ? '100%' : index === 2 ? '60%' : '0%' }}
+                        ></div>
+                      </div>
+                      <div className="mt-2 text-xs text-center text-white/80">
+                        {index === 1 ? 'Upper Body' : index === 2 ? 'Cardio' : index === 4 ? 'Legs' : ''}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+                <div className="mt-4 flex justify-between text-sm">
+                  <span className="text-emerald-400 font-medium">2 Completed</span>
+                  <span className="text-violet-400 font-medium">1 In Progress</span>
+                  <span className="text-gray-400 font-medium">4 Upcoming</span>
+                </div>
+              </motion.div>
             </div>
           </div>
-
-          {/* Weekly Overview */}
-          <div className="mt-8 bg-white rounded-xl shadow-lg p-6 transform transition duration-300 hover:scale-105">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Weekly Overview</h2>
-            <div className="grid grid-cols-7 gap-3">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-                <div key={day} className={`p-4 rounded-lg ${index === 1 ? 'bg-indigo-100 border-2 border-indigo-500' : 'bg-gray-50'}`}>
-                  <p className="text-center font-medium">{day}</p>
-                  <div className={`mt-2 h-2 rounded-full ${index === 1 ? 'bg-indigo-500' : index < 1 ? 'bg-green-500' : 'bg-gray-200'}`}></div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 flex justify-between text-sm text-gray-500">
-              <span>2 Completed</span>
-              <span>5 Remaining</span>
-            </div>
-          </div>
-        </section>
-
+        </motion.section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8">
+      <footer className="bg-gradient-to-br from-slate-900 to-indigo-900 border-t border-white/10 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h3 className="text-xl font-bold">FitAI</h3>
-            <p className="mt-2">Your AI-powered fitness companion</p>
+            <Link to="/" className="text-xl font-bold font-montserrat flex items-center justify-center inline-block">
+              <span className="text-indigo-400 mr-1">Fit</span>AI
+            </Link>
+            <p className="mt-2 text-blue-100">Your AI-powered fitness companion</p>
             <p className="mt-6 text-gray-400">© 2023 FitAI. All rights reserved.</p>
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

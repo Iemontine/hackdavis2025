@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth0 } from "@auth0/auth0-react";
 
 interface Exercise {
   name: string;
@@ -16,6 +18,12 @@ interface Workout {
   exercises: Exercise[];
 }
 
+interface WorkoutResponse {
+  workout_id: string;
+  workout: Workout;
+  share_url: string;
+}
+
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -24,15 +32,19 @@ function formatTime(seconds: number): string {
 
 function WorkoutSession() {
   const navigate = useNavigate();
+  const { workoutId } = useParams();
+  const { user } = useAuth0();
   const [workout, setWorkout] = useState<Workout | null>(null);
+  const [workoutUrl, setWorkoutUrl] = useState<string | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [totalTime, setTotalTime] = useState(0);
   const [isResting, setIsResting] = useState(false);
-  const [restTimeRemaining, setRestTimeRemaining] = useState(60); // 1 minute rest
+  const [restTimeRemaining, setRestTimeRemaining] = useState(60);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Sample workouts for testing
+  const [showShareFeedback, setShowShareFeedback] = useState(false);
 
   const repBasedWorkout: Workout = {
     type: "rep-based",
@@ -108,21 +120,63 @@ function WorkoutSession() {
     ],
   };
 
-  // For demo purposes, choose a workout type
   useEffect(() => {
-    // You can replace this with a prop or state from your parent component
-    const workoutType = "rep-based"; // Changed from "time-based" to "rep-based"
-    setWorkout(
-      workoutType === "time-based" ? timeBasedWorkout : repBasedWorkout
-    );
-  }, []);
+    async function fetchWorkout() {
+      setIsLoading(true);
+      try {
+        if (workoutId) {
+          const response = await fetch(`http://localhost:8000/workout/${workoutId}`);
+          if (!response.ok) {
+            throw new Error('Workout not found');
+          }
+          const data = await response.json();
+          setWorkout(data.workout);
+          setWorkoutUrl(`${window.location.origin}/workout/${data.workout_id}`);
+        } else {
+          const response = await fetch('http://localhost:8000/workout/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              auth0_id: user?.sub || null,
+              preferences: {
+                type: 'strength',
+              }
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to generate workout');
+          }
+
+          const data: WorkoutResponse = await response.json();
+          setWorkout(data.workout);
+          setWorkoutUrl(data.share_url);
+          window.history.pushState({}, '', `/workout/${data.workout_id}`);
+        }
+      } catch (err) {
+        console.error('Error fetching workout:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setWorkout(repBasedWorkout);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchWorkout();
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [workoutId, user]);
 
   useEffect(() => {
     if (!workout) return;
 
-    // Initialize timer for time-based workouts
     if (workout.type === "time-based") {
-      // Calculate total seconds from the current exercise duration
       const currentExercise = workout.exercises[currentExerciseIndex];
       const durationMatch = currentExercise.duration?.match(/(\d+)\s*minutes?/);
 
@@ -132,16 +186,12 @@ function WorkoutSession() {
         setTimeRemaining(seconds);
         setTotalTime(seconds);
 
-        // Start the timer
         timerRef.current = setInterval(() => {
           setTimeRemaining((prev) => {
             if (prev <= 1) {
-              // Time's up for this exercise
               if (currentExerciseIndex < workout.exercises.length - 1) {
-                // Move to next exercise
                 setCurrentExerciseIndex(currentExerciseIndex + 1);
               } else {
-                // Workout complete
                 clearInterval(timerRef.current!);
                 return 0;
               }
@@ -165,19 +215,15 @@ function WorkoutSession() {
       timerRef.current = setInterval(() => {
         setRestTimeRemaining((prev) => {
           if (prev <= 1) {
-            // Rest time complete
             setIsResting(false);
             clearInterval(timerRef.current!);
 
-            // If we're on the last exercise, end the workout
             if (currentExerciseIndex >= (workout?.exercises.length || 0) - 1) {
-              // Workout complete
             } else {
-              // Move to the next exercise
               setCurrentExerciseIndex((prev) => prev + 1);
             }
 
-            return 60; // Reset rest timer
+            return 60;
           }
           return prev - 1;
         });
@@ -198,30 +244,55 @@ function WorkoutSession() {
     }
   };
 
-  if (!workout) {
+  const shareWorkout = () => {
+    if (workoutUrl) {
+      navigator.clipboard.writeText(workoutUrl)
+        .then(() => {
+          setShowShareFeedback(true);
+          setTimeout(() => setShowShareFeedback(false), 3000);
+        })
+        .catch(err => {
+          console.error('Failed to copy:', err);
+          alert('Failed to copy link');
+        });
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-l-2 border-indigo-400"></div>
+      </div>
+    );
+  }
+
+  if (error || !workout) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 text-white">
+        <h2 className="text-2xl font-bold mb-4">Error Loading Workout</h2>
+        <p className="text-red-400 mb-6">{error || "Workout not available"}</p>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="px-6 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          Go to Dashboard
+        </button>
       </div>
     );
   }
 
   const currentExercise = workout.exercises[currentExerciseIndex];
 
-  // Calculate progress more accurately
   const calculateProgress = () => {
-    // Calculate completed exercises progress
     const completedExercisesProgress =
       (currentExerciseIndex / workout.exercises.length) * 100;
 
-    // Calculate current exercise progress
     let currentExerciseProgress = 0;
     if (workout.type === "time-based" && !isResting && totalTime > 0) {
       currentExerciseProgress =
         ((totalTime - timeRemaining) / totalTime) *
         (100 / workout.exercises.length);
     } else if (isResting) {
-      // If resting, count the current exercise as completed
       currentExerciseProgress = 100 / workout.exercises.length;
     }
 
@@ -233,77 +304,115 @@ function WorkoutSession() {
 
   const progress = calculateProgress();
 
-  // Keep this for the time-based exercise's own progress indicator
   const timeProgress =
     workout.type === "time-based"
       ? ((totalTime - timeRemaining) / totalTime) * 100
       : 0;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm py-4 px-6">
-        <div className="max-w-5xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">{workout.name}</h1>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="text-indigo-600 hover:text-indigo-800 font-medium"
-          >
-            Exit Workout
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 flex flex-col text-white">
+      <header className="glass-dark sticky top-0 border-b border-white/10 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-6">
+            <Link to="/" className="font-montserrat text-2xl font-bold flex items-baseline">
+              <motion.span
+                className="text-indigo-400 mr-1"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Fit
+              </motion.span>
+              <span className="text-white">AI</span>
+            </Link>
+            <h1 className="text-xl font-bold text-white border-l border-white/20 pl-6">{workout.name}</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <button
+                  onClick={shareWorkout}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-indigo-700 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                  </svg>
+                  Share
+                </button>
+              </motion.div>
+              <AnimatePresence>
+                {showShareFeedback && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 10 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-indigo-900 border border-indigo-500 text-white px-3 py-1 rounded shadow-lg whitespace-nowrap"
+                  >
+                    <div className="text-sm font-medium">Link copied!</div>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-l-8 border-r-8 border-b-8 border-transparent border-b-indigo-900"></div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
+            >
+              Exit Workout
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Main content */}
       <main className="flex-1 py-8 px-6">
         <div className="max-w-3xl mx-auto">
-          {/* Workout description */}
-          <div className="bg-gray-50 rounded-xl p-6 mb-8 shadow-sm">
-            <p className="text-gray-700">{workout.description}</p>
+          <div className="glass rounded-xl p-6 mb-8">
+            <p className="text-white/90">{workout.description}</p>
           </div>
 
           {isResting ? (
-            // Rest timer display
-            <div className="bg-indigo-50 rounded-xl p-8 mb-8 text-center shadow-sm border border-indigo-100">
-              <h2 className="text-2xl font-bold text-indigo-700 mb-2">
+            <div className="glass bg-indigo-900/30 backdrop-blur-md rounded-xl p-8 mb-8 text-center border border-indigo-500/30">
+              <h2 className="text-2xl font-bold text-indigo-300 mb-2 font-montserrat">
                 Rest Time
               </h2>
-              <div className="text-5xl font-bold text-indigo-800 mb-4">
+              <div className="text-5xl font-bold text-white mb-4 font-montserrat">
                 {formatTime(restTimeRemaining)}
               </div>
-              <p className="text-indigo-600">
+              <p className="text-indigo-300">
                 Take a breather before the next exercise
               </p>
             </div>
           ) : (
-            // Current exercise
-            <div className="bg-white rounded-xl p-8 mb-8 shadow-md border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-800 mb-1">
+            <div className="glass backdrop-blur-md rounded-xl p-8 mb-8 border border-white/20">
+              <h2 className="text-2xl font-bold text-white mb-1 font-montserrat">
                 {currentExercise.name}
               </h2>
 
               {workout.type === "time-based" && currentExercise.duration && (
-                <div className="text-indigo-600 font-medium mb-4">
+                <div className="text-indigo-400 font-medium mb-4">
                   Duration: {currentExercise.duration}
                 </div>
               )}
 
               {workout.type === "rep-based" && currentExercise.reps && (
-                <div className="text-indigo-600 font-medium mb-4">
+                <div className="text-indigo-400 font-medium mb-4">
                   Reps: {currentExercise.reps}
                 </div>
               )}
 
-              <p className="text-gray-600 mb-6">
+              <p className="text-white/80 mb-6">
                 {currentExercise.description}
               </p>
 
               {workout.type === "time-based" && (
                 <div className="text-center">
-                  <div className="text-5xl font-bold text-indigo-800 mb-4">
+                  <div className="text-5xl font-bold text-white mb-4 font-montserrat">
                     {formatTime(timeRemaining)}
                   </div>
-                  <p className="text-gray-600">Time Remaining</p>
+                  <p className="text-white/70">Time Remaining</p>
                 </div>
               )}
 
@@ -318,10 +427,9 @@ function WorkoutSession() {
             </div>
           )}
 
-          {/* Upcoming exercises */}
           {currentExerciseIndex < workout.exercises.length - 1 && (
             <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+              <h3 className="text-lg font-semibold text-white/90 mb-4 font-montserrat">
                 Up Next:
               </h3>
               <div className="space-y-3">
@@ -330,19 +438,19 @@ function WorkoutSession() {
                   .map((exercise, idx) => (
                     <div
                       key={idx}
-                      className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                      className="glass-dark rounded-lg p-4 border border-white/10"
                     >
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-gray-800">
+                        <span className="font-medium text-white">
                           {exercise.name}
                         </span>
                         {workout.type === "time-based" && exercise.duration && (
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-white/70">
                             {exercise.duration}
                           </span>
                         )}
                         {workout.type === "rep-based" && exercise.reps && (
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-white/70">
                             {exercise.reps} reps
                           </span>
                         )}
@@ -355,19 +463,18 @@ function WorkoutSession() {
         </div>
       </main>
 
-      {/* Bottom progress bar */}
-      <div className="bg-white border-t border-gray-200 py-4 px-6 sticky bottom-0">
+      <div className="glass-dark border-t border-white/10 py-4 px-6 sticky bottom-0">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-white/80">
               Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
             </span>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-white/80">
               {progress}% Complete
             </span>
           </div>
 
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div className="w-full bg-slate-700 rounded-full h-2.5">
             <div
               className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300"
               style={{

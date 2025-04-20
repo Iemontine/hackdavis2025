@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth0 } from "@auth0/auth0-react";
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function WorkoutPage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -10,7 +11,24 @@ function WorkoutPage() {
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const [showTooltip, setShowTooltip] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null); // For auto-scrolling
   const { user, isAuthenticated, isLoading, logout } = useAuth0();
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [agentMessages]);
+
+  // Hide tooltip after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowTooltip(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Start workout conversation when authenticated user is available
   useEffect(() => {
@@ -155,44 +173,126 @@ function WorkoutPage() {
     }
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const pulseVariants = {
+    initial: { scale: 1 },
+    pulse: {
+      scale: [1, 1.05, 1],
+      transition: {
+        repeat: Infinity,
+        repeatType: "loop" as const,
+        duration: 2
+      }
+    }
+  };
+
+  const waveVariants = {
+    initial: { pathLength: 0, pathOffset: 0 },
+    animate: {
+      pathLength: 1,
+      pathOffset: 0,
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        ease: "linear"
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col relative overflow-hidden">
-      {/* Subtle animated background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 flex flex-col relative overflow-hidden">
+      {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-10 w-96 h-96 bg-blue-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20 animate-blob"></div>
-        <div className="absolute bottom-0 right-10 w-96 h-96 bg-indigo-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-15 animate-blob animation-delay-4000"></div>
-        <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-purple-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-10 animate-blob animation-delay-2000"></div>
+        <motion.div
+          className="absolute top-0 left-10 w-96 h-96 bg-blue-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-20"
+          animate={{
+            x: [0, 30, 0],
+            y: [0, -50, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 20,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-10 w-96 h-96 bg-indigo-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-15"
+          animate={{
+            x: [0, -30, 0],
+            y: [0, 50, 0],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 25,
+            ease: "easeInOut",
+            delay: 1
+          }}
+        />
+        <motion.div
+          className="absolute top-1/3 left-1/3 w-96 h-96 bg-purple-500 rounded-full mix-blend-soft-light filter blur-[120px] opacity-10"
+          animate={{
+            x: [0, -20, 0],
+            y: [0, 20, 0],
+            scale: [1, 0.9, 1]
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 15,
+            ease: "easeInOut",
+            delay: 2
+          }}
+        />
       </div>
-      
-      {/* Sleek header bar with user profile */}
-      <header className="w-full bg-black/30 backdrop-blur-md border-b border-white/10 relative z-10">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+
+      {/* Header bar with user profile */}
+      <header className="glass-dark sticky top-0 border-b border-white/10 relative z-10">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <Link to="/" className="text-blue-400 hover:text-blue-300 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
+            <Link to="/" className="font-montserrat text-2xl font-bold flex items-center">
+              <motion.div whileHover={{ x: -5 }} whileTap={{ scale: 0.95 }} className="mr-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+              </motion.div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">
+                <span className="text-indigo-400 mr-1">Fit</span>AI
+              </h1>
             </Link>
-            <h1 className="text-2xl font-bold text-white tracking-tight ml-4">Voice Workout Assistant</h1>
           </div>
-          
-          {/* Elegant user profile display */}
+
+          {/* User profile */}
           {isAuthenticated && user && (
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
                 {user.picture && (
                   <div className="relative">
-                    <img 
-                      src={user.picture} 
-                      alt={user.name || "User"} 
-                      className="w-10 h-10 rounded-full border-2 border-blue-400"
+                    <motion.img
+                      whileHover={{ scale: 1.1 }}
+                      src={user.picture}
+                      alt={user.name || "User"}
+                      className="w-10 h-10 rounded-full border-2 border-indigo-400 object-cover"
                     />
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-slate-800"></div>
                   </div>
                 )}
-                <button 
+                <button
                   onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-                  className="ml-3 text-sm text-blue-300 hover:text-white transition-colors"
+                  className="ml-3 text-sm text-blue-300 hover:text-white transition-colors font-medium"
                 >
                   Log out
                 </button>
@@ -204,88 +304,190 @@ function WorkoutPage() {
 
       {/* Main content in a responsive grid layout */}
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+        <motion.div
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
 
           {/* Assistant panel - larger on desktop */}
-          <div className="lg:col-span-7 xl:col-span-8">
-            <div className="h-full backdrop-blur-md bg-white/5 rounded-2xl border border-white/10 overflow-hidden shadow-xl">
-              <div className="px-6 py-4 border-b border-white/10 flex items-center">
-                <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse mr-3"></div>
-                <h2 className="text-lg font-medium text-white/90">Workout Assistant</h2>
+          <motion.div className="lg:col-span-7 xl:col-span-8" variants={itemVariants}>
+            <div className="h-full glass rounded-2xl border border-white/20 overflow-hidden shadow-xl">
+              <div className="px-6 py-4 border-b border-white/10 flex items-center bg-white/5">
+                <div className="w-3 h-3 rounded-full bg-blue-400 animate-pulse mr-3"></div>
+                <h2 className="text-lg font-semibold text-white/90 font-montserrat">FitAI Assistant</h2>
               </div>
               <div className="p-6 h-[calc(100%-62px)] overflow-y-auto">
                 {isLoadingAgent ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-l-2 border-blue-400"></div>
-                    <span className="ml-3 text-blue-200 font-medium">Connecting...</span>
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <div className="loader w-12 h-12"></div>
+                    <span className="mt-4 text-blue-200 font-medium animate-pulse">Connecting to AI...</span>
                   </div>
                 ) : agentMessages.length > 0 ? (
                   <div className="space-y-6">
-                    {agentMessages.length > 0 && (
-                      <div className="animate-fadeIn transition-all duration-500 opacity-100">
+                    {agentMessages.map((message, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10"
+                      >
                         <p className="text-white/90 leading-relaxed text-lg">
-                          {agentMessages[agentMessages.length - 1]}
+                          {message}
                         </p>
-                      </div>
-                    )}
+                      </motion.div>
+                    ))}
+                    <div ref={messagesEndRef} />
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-white/50 italic text-center">Getting ready to assist with your workout...</p>
+                    <motion.p
+                      variants={pulseVariants}
+                      initial="initial"
+                      animate="pulse"
+                      className="text-white/50 italic text-center"
+                    >
+                      Getting ready to assist with your workout...
+                    </motion.p>
                   </div>
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Controls and transcription panel */}
-          <div className="lg:col-span-5 xl:col-span-4 space-y-6">
+          <motion.div className="lg:col-span-5 xl:col-span-4 space-y-6" variants={itemVariants}>
             {/* Interactive microphone control */}
-            <div className="backdrop-blur-md bg-white/5 rounded-2xl border border-white/10 overflow-hidden shadow-xl p-6 flex flex-col items-center">
-              <button
-                className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-500 ${isRecording
-                    ? 'bg-gradient-to-r from-red-600 to-pink-600 shadow-lg shadow-red-500/20'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/20'
-                  }`}
-                onClick={handleMicrophoneClick}
-                disabled={isProcessing}
-              >
-                {isRecording && (
-                  <>
-                    <div className="absolute inset-0 rounded-full animate-ping-slow bg-red-500/20"></div>
-                    <div className="absolute inset-0 rounded-full animate-ping-slower bg-red-500/10"></div>
-                  </>
-                )}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className={`h-10 w-10 text-white transition-all duration-300 ${isRecording ? 'scale-90' : 'scale-100'}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+            <div className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl p-6 flex flex-col items-center">
+              <div className="relative">
+                <AnimatePresence>
+                  {showTooltip && !isRecording && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: -10 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white text-slate-800 px-4 py-2 rounded-lg shadow-lg w-48 text-center z-10"
+                    >
+                      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-4 h-4 bg-white"></div>
+                      Tap to start speaking
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <motion.button
+                  className={`relative w-28 h-28 rounded-full flex items-center justify-center transition-all ${isRecording
+                      ? 'bg-gradient-to-r from-red-600 to-pink-600'
+                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500'
+                    }`}
+                  onClick={handleMicrophoneClick}
+                  disabled={isProcessing}
+                  whileHover={!isRecording ? { scale: 1.05, boxShadow: '0 0 15px rgba(79, 70, 229, 0.6)' } : {}}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                  />
-                </svg>
-              </button>
+                  {isRecording && (
+                    <>
+                      <motion.div
+                        className="absolute inset-0 rounded-full bg-red-500/20"
+                        initial={{ scale: 0.8, opacity: 0.2 }}
+                        animate={{
+                          scale: [1, 1.4, 1],
+                          opacity: [0.2, 0.1, 0.2]
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 2,
+                          ease: "easeInOut"
+                        }}
+                      />
+                      <motion.div
+                        className="absolute inset-0 rounded-full bg-red-500/10"
+                        initial={{ scale: 0.8, opacity: 0.1 }}
+                        animate={{
+                          scale: [1, 1.6, 1],
+                          opacity: [0.1, 0.05, 0.1]
+                        }}
+                        transition={{
+                          repeat: Infinity,
+                          duration: 3,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    </>
+                  )}
+                  <motion.svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-10 w-10 text-white"
+                    viewBox="0 0 24 24"
+                    animate={isRecording ? { scale: [1, 1.1, 1], opacity: [1, 0.8, 1] } : {}}
+                    transition={isRecording ? { repeat: Infinity, duration: 1.5 } : {}}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      fill="none"
+                      stroke="currentColor"
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </motion.svg>
+                </motion.button>
+              </div>
 
-              <p className="mt-5 font-medium text-white/80 text-lg">
-                {isRecording ? "Recording..." : "Tap to Speak"}
-              </p>
+              <motion.p
+                className="mt-5 font-medium text-white/90 text-lg"
+                variants={pulseVariants}
+                initial="initial"
+                animate={isRecording ? "pulse" : "initial"}
+              >
+                {isRecording ? "Recording... Press to stop" : "Tap to Speak"}
+              </motion.p>
+
+              {isRecording && (
+                <div className="mt-4">
+                  <svg width="60" height="30" viewBox="0 0 60 30">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((i) => (
+                      <motion.path
+                        key={i}
+                        d={`M${i * 4 + 2},15 Q${i * 4 + 3},${Math.random() * 10 + 10} ${i * 4 + 4},15`}
+                        stroke="#38bdf8"
+                        strokeWidth="2"
+                        fill="none"
+                        initial="initial"
+                        animate="animate"
+                        variants={waveVariants}
+                        custom={i}
+                      />
+                    ))}
+                  </svg>
+                </div>
+              )}
 
               {isProcessing && (
-                <div className="mt-4 flex items-center bg-black/30 px-4 py-2 rounded-full">
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-l-2 border-blue-400"></div>
-                  <span className="ml-3 text-blue-200 font-medium">Processing...</span>
-                </div>
+                <motion.div
+                  className="mt-4 flex items-center glass-dark rounded-full px-4 py-2"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <svg className="animate-spin h-4 w-4 text-blue-400 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span className="text-blue-200 font-medium">Processing...</span>
+                </motion.div>
               )}
             </div>
 
             {/* Transcription display */}
-            <div className="backdrop-blur-md bg-white/5 rounded-2xl border border-white/10 overflow-hidden shadow-xl">
+            <motion.div
+              className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
               <div className="px-6 py-4 border-b border-white/10 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
@@ -294,16 +496,39 @@ function WorkoutPage() {
               </div>
 
               <div className="p-6 min-h-[120px]">
-                {transcription ? (
-                  <p className="text-white/80 leading-relaxed animate-fadeIn">{transcription}</p>
-                ) : (
-                  <p className="text-white/40 italic text-center">Your voice will be transcribed here...</p>
-                )}
+                <AnimatePresence mode="wait">
+                  {transcription ? (
+                    <motion.p
+                      key="transcription"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="text-white/90 leading-relaxed"
+                    >
+                      {transcription}
+                    </motion.p>
+                  ) : (
+                    <motion.p
+                      key="placeholder"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="text-white/40 italic text-center"
+                    >
+                      Your voice will be transcribed here...
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
-            </div>
+            </motion.div>
 
             {/* Instruction panel */}
-            <div className="backdrop-blur-md bg-white/5 rounded-2xl border border-white/10 overflow-hidden shadow-xl p-4">
+            <motion.div
+              className="glass rounded-2xl border border-white/20 overflow-hidden shadow-xl p-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
               <div className="flex items-center text-left">
                 <div className="flex-shrink-0 bg-blue-500/20 rounded-lg p-2 mr-4">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -312,77 +537,13 @@ function WorkoutPage() {
                 </div>
                 <div>
                   <h3 className="text-white/90 font-medium mb-1">How to use</h3>
-                  <p className="text-white/60 text-sm">Tap the microphone button, speak clearly about your workout, then release to get assistance.</p>
+                  <p className="text-white/70 text-sm">Tap the microphone button, speak clearly about your workout goals, then release to get AI guidance.</p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </main>
-
-      {/* Add CSS for animations */}
-      <style>{`
-        @keyframes gradient-x {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        
-        @keyframes ping-slow {
-          0% { transform: scale(1); opacity: 1; }
-          75%, 100% { transform: scale(1.5); opacity: 0; }
-        }
-        
-        @keyframes ping-slower {
-          0% { transform: scale(1); opacity: 0.8; }
-          75%, 100% { transform: scale(2); opacity: 0; }
-        }
-        
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(10px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-gradient-x {
-          animation: gradient-x 15s ease infinite;
-          background-size: 200% 200%;
-        }
-        
-        .animate-blob {
-          animation: blob 30s infinite alternate;
-        }
-        
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        
-        .animate-ping-slow {
-          animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-        
-        .animate-ping-slower {
-          animation: ping-slower 3s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-in;
-        }
-        
-        .bg-size-200 {
-          background-size: 200% 200%;
-        }
-      `}</style>
     </div>
   );
 }

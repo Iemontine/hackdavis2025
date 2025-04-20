@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import LoginButton from "./components/LoginButton";
 import Hero from "./components/Hero";
 import FeaturesSection from "./components/FeaturesSection";
@@ -11,27 +12,130 @@ import WorkoutPage from "./onboarding/App";
 import WorkoutSession from "./workout/App";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+
+// PageTransition component for consistent transitions
+const PageTransition = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.3 }}
+    className="relative z-10 min-h-screen w-full"
+  >
+    {children}
+  </motion.div>
+);
+
+// Animated route transitions using framer-motion
+const AnimatedRoutes = () => {
+  const location = useLocation();
+
+  return (
+    <>
+      {/* Global transition overlay that appears during page transitions */}
+      <AnimatePresence>
+        <motion.div
+          key="global-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0 }}
+          exit={{ opacity: 0.7 }}
+          className="fixed inset-0 bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 pointer-events-none"
+          style={{ zIndex: 9999 }}
+        />
+      </AnimatePresence>
+
+      {/* Actual route transitions */}
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/onboarding" element={
+            <PageTransition>
+              <WorkoutPage />
+            </PageTransition>
+          } />
+          <Route path="/dashboard" element={
+            <PageTransition>
+              <TestApp />
+            </PageTransition>
+          } />
+          {/* Standard workout page */}
+          <Route path="/workout" element={
+            <PageTransition>
+              <WorkoutSession />
+            </PageTransition>
+          } />
+          {/* New route for shared workouts with ID */}
+          <Route path="/workout/:workoutId" element={
+            <PageTransition>
+              <WorkoutSession />
+            </PageTransition>
+          } />
+          <Route
+            path="/"
+            element={
+              <PageTransition>
+                <div className="min-h-screen bg-gradient-to-b from-slate-900 via-indigo-900 to-purple-900 text-white">
+                  <Header />
+                  <Hero />
+                  <FeaturesSection />
+                  <HowItWorks />
+                  <AgentSection />
+                  <CTASection />
+                  <Footer />
+                </div>
+              </PageTransition>
+            }
+          />
+        </Routes>
+      </AnimatePresence>
+    </>
+  );
+};
 
 // Header component with user profile
 function Header() {
-  const { isAuthenticated } = useAuth0();
-  
+  const { isAuthenticated, user } = useAuth0();
+
   return (
-    <header className="bg-black/20 backdrop-blur-md py-4 px-6">
+    <header className="glass-dark py-4 px-6 sticky top-0 z-50">
       <div className="container mx-auto flex justify-between items-center">
-        <div className="text-xl font-bold text-white">Your App Name</div>
-        
+        <div className="flex items-center">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Link to="/" className="font-montserrat text-2xl font-bold text-white flex items-center">
+              <span className="text-indigo-400 mr-1">Fit</span>AI
+            </Link>
+          </motion.div>
+        </div>
+
         <div className="flex items-center space-x-6">
           {isAuthenticated ? (
             <>
-              <Link to="/dashboard" className="text-blue-300 hover:text-white transition-colors">Dashboard</Link>
-              <Link to="/workout" className="text-blue-300 hover:text-white transition-colors">Workout</Link>
-              <div className="flex items-center">
+              <Link to="/dashboard" className="text-blue-300 hover:text-white transition-colors font-medium">Dashboard</Link>
+              <div className="flex items-center space-x-2">
+                {user?.picture && (
+                  <div className="relative">
+                    <img
+                      src={user.picture}
+                      alt={user.name || "User"}
+                      className="w-8 h-8 rounded-full border-2 border-indigo-400 object-cover"
+                    />
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border border-slate-800"></div>
+                  </div>
+                )}
                 <LoginButton />
               </div>
             </>
           ) : (
-            <LoginButton />
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <LoginButton />
+            </motion.div>
           )}
         </div>
       </div>
@@ -40,27 +144,17 @@ function Header() {
 }
 
 function App() {
+  // Add this to ensure smooth scrolling behavior throughout the app
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = 'smooth';
+    return () => {
+      document.documentElement.style.scrollBehavior = 'auto';
+    };
+  }, []);
+
   return (
     <Router>
-      <Routes>
-        <Route path="/onboarding" element={<WorkoutPage />} />
-        <Route path="/dashboard" element={<TestApp />} />
-        <Route path="/workoutsession" element={<WorkoutSession />} />
-        <Route
-          path="/"
-          element={
-            <div className="min-h-screen bg-gradient-to-b from-slate-900 via-blue-900 to-indigo-900 text-white">
-              <Header />
-              <Hero />
-              <FeaturesSection />
-              <HowItWorks />
-              <AgentSection />
-              <CTASection />
-              <Footer />
-            </div>
-          }
-        />
-      </Routes>
+      <AnimatedRoutes />
     </Router>
   );
 }
